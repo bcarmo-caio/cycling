@@ -1,0 +1,11 @@
+MAC0438 Programação Concorrente - EP1
+
+Caio Renato Bedulli do Carmo    7102816
+Leonardo Schäffer               7278142
+
+To compile:
+make
+
+To execute:
+./cyclism d n [v|u] [-d]
+Option "-d" turns the debug flag on.
