@@ -1,8 +1,9 @@
 CC=gcc
-CFLAGS=-Wall -std=c11 -pedantic -O4
+CFLAGS=-Wall -std=c11 -pedantic -O4 -Wno-unused-but-set-variable
+LDFLAGS=-lpthread
 
 main: cycling.c
-	$(CC) $(CFLAGS) cycling.c -o cycling
+	$(CC) $(CFLAGS) $(LDFLAGS) cycling.c -o cycling
 
 clean:
 	rm -rf cycling

@@ -1,8 +1,11 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include <string.h>
 
-void cyclist(int id);
+void *cyclist(void *arg) {
+	return NULL;
+}
 
 int main(int argc, char **argv) {
 	int d, n, i, debug = 0;
@@ -16,10 +19,7 @@ int main(int argc, char **argv) {
 
 	threads = malloc(n*sizeof(pthread_t));
 	for (i = 0; i < n; i++)
-		pthread_create(threads[i], NULL, cyclist, i);
+		pthread_create(&threads[i], NULL, &cyclist, NULL);
 
 	return 0;
-}
-
-void cyclist(int id) {
 }
