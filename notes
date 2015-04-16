@@ -12,3 +12,18 @@ Posição pista[i] identifica todos corredores nessa posição da pista
 { int posicoes_livres in [0, 4]; int po1, ..., pos4 (id da thread); }
 Possui controle de acesso
 Threads modificam pista[]
+
+Início:
+Cria as threads
+Cada thread sorteia sua posição no vetor pista
+Usamos uma barreira para esperar todas as threads terem posição
+Usamos a barreira para controlar cada 72ms de simulação
+	Cada thread quando escolhida para executar tenta se mover se possível.
+Usamos outra barreira (?) para que a cada 2 voltas descubramos quem é eliminado
+	podemos atualizar uma ED com a posição dos ciclistas
+A cada 4 voltas vemos se algum ciclista quebra, se alguém quebra é só atualizar na ED
+No final imprimimos a ED
+Se houver a opção de debug, é só imprimirmos a ED quando precisar
+
+Provavelmente é bom armazenar quantas voltas cada ciclista já completou.
+Ciclistas diferentes podem estar em voltas diferentes, o 1º pode estar na volta 3 enquanto o último pode estar na volta 1. Como tratar isso?
