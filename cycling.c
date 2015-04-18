@@ -8,7 +8,7 @@ struct runway_position {
 	int position[4];
 };
 
-//thread for a cyclist
+/* thread for a cyclist */
 void *cyclist(void *arg) {
 	return NULL;
 }
