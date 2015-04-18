@@ -2,3 +2,4 @@ cycling
 *.aux
 *.log
 *.swp
+*.o
