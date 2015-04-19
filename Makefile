@@ -1,15 +1,42 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -ansi -pedantic -O2 -Wno-comment
+CFLAGS=-Wall \
+	   -Wextra \
+	   -ansi \
+	   -pedantic \
+	   -O2 \
+	   -Wno-comment \
+	   -Winit-self \
+	   -Wmissing-braces \
+	   -Wmissing-include-dirs \
+	   -Wswitch-default \
+	   -Wmaybe-uninitialized \
+	   -Wfloat-equal \
+	   -Wundef \
+	   -Wmissing-declarations \
+	   -Winline \
+	   -Wshadow
+
 LDFLAGS=-lpthread
 
-all: clean cycling.c
-	$(CC) $(CFLAGS) $(LDFLAGS) cycling.c -o cycling
+OBJS=cycling.o \
+	 cyclist.o \
+	 utils.o
 
-debug: clean cycling.c
-	$(CC) $(CFLAGS) -g -DDEBUG  $(LDFLAGS) cycling.c -o cycling
+BIN=cycling
+
+all: $(OBJS)
+	$(CC) $(OBJS) -o $(BIN) $(LDFLAGS)
+
+debug:CFLAGS+=-g
+debug:CFLAGS+=-DDEBUG
+debug: all
 
 clean:
-	rm -rf cycling *.o
+	rm -rf $(BIN) $(OBJS)
+
+%.o: %.c
+	@echo [CC] $< -o $@ CFLAGS
+	@gcc -c $< -o $@ $(CFLAGS)
 
 report: report.tex
 	pdflatex report.tex
@@ -23,4 +50,4 @@ package: cycling.c Makefile README report.pdf
 	rm -rf ep1-caio-leonardo
 
 purge:
-	rm -rf cycling *.o report.aux report.log ep1-caio-leonardo ep1.tar.gz
+	rm -rf $(BIN) $(OBJS) report.aux report.log ep1-caio-leonardo ep1.tar.gz
