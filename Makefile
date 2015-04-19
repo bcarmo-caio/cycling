@@ -5,8 +5,8 @@ LDFLAGS=-lpthread
 all: clean cycling.c
 	$(CC) $(CFLAGS) $(LDFLAGS) cycling.c -o cycling
 
-debug: cycling.c
-	$(CC) $(CFLAGS) -g  $(LDFLAGS) cycling.c -o cycling
+debug: clean cycling.c
+	$(CC) $(CFLAGS) -g -DDEBUG  $(LDFLAGS) cycling.c -o cycling
 
 clean:
 	rm -rf cycling *.o

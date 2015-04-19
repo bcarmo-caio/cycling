@@ -11,6 +11,8 @@
 #include <semaphore.h>
 #include <errno.h>
 #include <assert.h>
+#include <time.h>
+
 
 void handle_error_en(int en, const char *msg) __attribute__ ((__noreturn__));
 void handle_error_en(int en, const char *msg) {
@@ -25,6 +27,7 @@ void handle_error(const char *msg) {
 	exit(EXIT_FAILURE);
 }
 
+sem_t create_thread;
 sem_t all_cyclists_set_up; /* must be initialized with 0 */
 sem_t go; /* must be initialized with initial_number_of_cyclists */
 sem_t end_simulation; /* must be initialized with 0 */
@@ -49,7 +52,6 @@ struct runway_position {
 };
 
 struct thread_info {     /* Used as argument to thread_start() */
-	pthread_t thread_id; /* ID returned by pthread_create() */
 	int	thread_num;      /* Application-defined thread # */
 	int cyclist_id;      /* Cyclist id */
 };
@@ -69,8 +71,10 @@ static void *cyclist(void *arg) {
 	sem_wait(&lock_cyclists_set);
 	cyclists_set++;
 	if(cyclists_set == initial_number_of_cyclists) {
+#ifdef DEBUG
 		printf("Thread %d cyclist %d waiting\n", thread_num, cyclist_id);
 		printf("Everyone set!\n");
+#endif
 		/* Tell main that we are ready! */
 		if(sem_post(&all_cyclists_set_up) == -1) {
 			errno_cpy = errno;
@@ -78,7 +82,9 @@ static void *cyclist(void *arg) {
 		}
 	}
 	else {
+#ifdef DEBUG
 		printf("Thread %d cyclist %d waiting\n", thread_num, cyclist_id);
+#endif
 		/* No one else will mess with cyclists_set if everyone is set up */
 		if(sem_post(&lock_cyclists_set) == -1) {
 			errno_cpy = errno;
@@ -86,6 +92,7 @@ static void *cyclist(void *arg) {
 		}
 	}
 
+	sem_post(&create_thread);
 	/* I am set up! waiting for everyone to be set up too */
 	if(sem_wait(&go) == -1) {
 		errno_cpy = errno;
@@ -97,7 +104,9 @@ static void *cyclist(void *arg) {
 		handle_error_en(errno_cpy, "sem_wait lock_current_number_of_cyclists");
 	}
 
+#ifdef DEBUG
 	printf("Thread %d cyclist %d gone\n", thread_num, cyclist_id);
+#endif
 	current_number_of_cyclists--;
 	if(current_number_of_cyclists > 0) {
 		if(sem_post(&lock_current_number_of_cyclists) == -1) {
@@ -122,23 +131,17 @@ static void *cyclist(void *arg) {
 	while(1) {
 	}
 */	
-	return NULL;
+	pthread_exit(NULL);
 }
 
-
-
 int main(int argc, char **argv) {
-	int d, i, __attribute__ ((__unused__)) debug_flag;
+	int d, i, j, __attribute__ ((__unused__)) debug_flag;
 	int *start = NULL;
 	pthread_t *threads = NULL;
-	struct thread_info *tinfo = NULL;
+	struct thread_info tinfo;
 	char errmsg[200];
 	int errno_cpy;
-
-	sem_t oioi;
-	sem_init(&oioi, 0, 0x69);
-	sem_wait(&oioi);
-	errno_cpy = 2;
+	int tmp;
 
 	if(argc < 4) {
 		sprintf(errmsg, "%s d n [v|u] ['d']\n"
@@ -149,6 +152,8 @@ int main(int argc, char **argv) {
 				"\t'd' (opcional) := habilita modo debug", argv[0]);
 		handle_error(errmsg);
 	}
+	
+	srand(time(NULL));
 
 	/*d := track length*/
 	d = atoi(argv[1]);
@@ -192,12 +197,6 @@ int main(int argc, char **argv) {
 	if(threads == NULL)
 		handle_error("threads = malloc");
 
-	/* creating 'n' info storage. One for each thread.*/
-	tinfo = (struct thread_info *)
-				malloc(initial_number_of_cyclists * sizeof(struct thread_info));
-	if(tinfo == NULL)
-		handle_error("tinfo = malloc");
-
 	/* initializing semaphores */
 	if(sem_init(&lock_cyclists_set, 0, 1) == -1) {
 		errno_cpy = errno;
@@ -224,45 +223,53 @@ int main(int argc, char **argv) {
 		errno_cpy = errno;
 		handle_error_en(errno_cpy, "sem_init all_cyclists_set_up");
 	}
+
+	if(sem_init(&create_thread, 0, 1) == -1) {
+		errno_cpy = errno;
+		handle_error_en(errno_cpy, "sem_init create_thread");
+	}
 	/* initialized */
 
 	start = (int *) malloc(initial_number_of_cyclists * sizeof(int));
-	if(tinfo == NULL)
+	if(start == NULL)
 		handle_error("start = malloc");
 
-	/* suffle start */
+	/* shuffle start */
 	for(i = 0; i < initial_number_of_cyclists; i++)
 		start[i] = i + 1;
+	/* http://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle */
+	for(i = initial_number_of_cyclists - 1; i >= 1; i--)
+	{
+		j = rand() % (i + 1);
+		tmp = start[i];
+		start[i] = start[j];
+		start[j] = tmp;
+	}
+	/* shuffled */
+
 
 	/* creating threads */
 	for (i = 0; i < initial_number_of_cyclists; i++) {
-		tinfo[i].thread_num = i + 1;
-		tinfo[i].cyclist_id = start[i];
-		errno_cpy = pthread_create(&(tinfo[i].thread_id), /* pthread_t *thread */
-								NULL, /* const pthread_attr_t *attr */
-								&cyclist, /* void *(*start_routine) (void *) */
-								(void *) &(tinfo[i])); /*void *arg*/
-		if (errno_cpy != 0)
-		{
+		sem_wait(&create_thread);
+		tinfo.thread_num = i + 1;
+		tinfo.cyclist_id = start[i];
+		errno_cpy = pthread_create( threads + i, /* pthread_t *thread */
+									NULL, /* const pthread_attr_t *attr */
+									&cyclist, /* void *(*routine) (void *) */
+									(void *) &tinfo ); /*void *arg*/
+		if (errno_cpy != 0)	{
 			sprintf(errmsg, "pthread_cread %d for cyclist %d", i, start[i]);
 			handle_error_en(errno_cpy, (const char *) errmsg);
 		}
-		threads[i] = tinfo[i].thread_id;
 	}
-
-	/* We do not need this anymore.
-	 * Each thread has its info copy now */
-	memset((void *) tinfo,
-			0,
-			initial_number_of_cyclists * sizeof(struct thread_info));
-	free(tinfo);
-	tinfo = NULL;
 
 	if(sem_wait(&all_cyclists_set_up) == -1) {
 		errno_cpy = errno;
 		handle_error_en(errno_cpy, "sem_wait all_cyclists_set_up");
 	}
+#ifdef DEBUG
 	printf("GO!\n");
+#endif
 	/*3*/
 	/*2*/
 	/*1*/
@@ -297,7 +304,8 @@ int main(int argc, char **argv) {
 			handle_error(errmsg);
 		}
 	}
-
+	
+	pthread_exit(NULL);
 	return 0;
 }
 
