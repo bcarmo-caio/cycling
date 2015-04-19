@@ -20,7 +20,7 @@
 
 sem_t create_thread; /* must be initialized with 0*/
 sem_t all_cyclists_set_up; /* must be initialized with 0 */
-sem_t go; /* must be initialized with initial_number_of_cyclists */
+sem_t go; /* must be initialized with 0 */
 sem_t end_simulation; /* must be initialized with 0 */
 
 /**/
@@ -56,6 +56,9 @@ int main(int argc, char **argv) {
 	char errmsg[200];
 	int errno_cpy;
 	int tmp;
+#ifdef DEBUG
+	int abort_on_start;
+#endif
 
 	if(argc < 4) {
 		sprintf(errmsg, "%s d n [v|u] ['d']\n"
@@ -75,6 +78,11 @@ int main(int argc, char **argv) {
 	/* number of cyclists at start */
 	initial_number_of_cyclists = atoi(argv[2]);
 	current_number_of_cyclists = initial_number_of_cyclists;
+
+	/* TODO: fix this comparison */
+	if(runway_length <= initial_number_of_cyclists)
+		handle_error("Nao cabe todo mundo na pista para largada.\n"
+				"Tem mais ciclistas que o tamanaho do circuito");
 
 	/*c := type of simulation
 	 *c = 'v' means cyclists may change their speed from 25km/h to 50km/h
@@ -99,6 +107,15 @@ int main(int argc, char **argv) {
 	else
 		debug_flag = 0;
 
+#ifdef DEBUG
+	abort_on_start = 0;
+	if (argc == 5 && (strcmp(argv[4], "-A")) == 0)
+		abort_on_start = 1;
+	else
+		if (argc == 6 && (strcmp(argv[5], "-A")) == 0)
+			abort_on_start = 1;
+#endif
+
 	/* creating circuit with 4 tracks and length 'd' */
 	runway = (struct runway_position *)
 				malloc(d * sizeof(struct runway_position));
@@ -112,7 +129,7 @@ int main(int argc, char **argv) {
 		handle_error("threads = malloc");
 
 	/* initializing semaphores */
-	if(sem_init(&lock_cyclists_set, 0, 1 ) == -1) {
+	if(sem_init(&lock_cyclists_set, 0, 1) == -1) {
 		errno_cpy = errno;
 		handle_error_en(errno_cpy, "sem_init lock_cyclists_set");
 	}
@@ -190,7 +207,7 @@ int main(int argc, char **argv) {
 		errno_cpy = pthread_create( threads + i, /* pthread_t *thread */
 									NULL, /* const pthread_attr_t *attr */
 									&cyclist, /* void *(*routine) (void *) */
-									(void *) &tinfo ); /*void *arg*/
+									(void *) &tinfo); /*void *arg*/
 		if (errno_cpy != 0)	{
 			sprintf(errmsg, "pthread_cread %d for cyclist %d", i, start[i]);
 			handle_error_en(errno_cpy, (const char *) errmsg);
@@ -205,6 +222,8 @@ int main(int argc, char **argv) {
 			handle_error_en(errno_cpy, "sem_wait all_cyclists_set_up");
 		}
 #ifdef DEBUG
+		if(abort_on_start == 1)
+			exit(EXIT_SUCCESS);
 		if(i > 0)
 			printf("End Lap %d\n", i);
 		printf("Lap %d\n", i + 1);
@@ -220,6 +239,7 @@ int main(int argc, char **argv) {
 				errno_cpy = errno;
 				handle_error_en(errno_cpy, "sem_post go");
 			}
+
 	/* NO CODE HERE!!!!! */
 	}
 	printf("End Lap %d\n", i);

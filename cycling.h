@@ -5,7 +5,7 @@
 
 extern sem_t create_thread; /* initialized with 0 */
 extern sem_t all_cyclists_set_up; /* initialized with 0 */
-extern sem_t go; /* initialized with initial_number_of_cyclists */
+extern sem_t go; /* initialized with 0 */
 extern sem_t end_simulation; /* initialized with 0 */
 
 /**/
