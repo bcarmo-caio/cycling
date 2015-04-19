@@ -3,13 +3,13 @@
 
 #include <semaphore.h>
 
-extern sem_t create_thread;
-extern sem_t all_cyclists_set_up; /* must be initialized with 0 */
-extern sem_t go; /* must be initialized with initial_number_of_cyclists */
-extern sem_t end_simulation; /* must be initialized with 0 */
+extern sem_t create_thread; /* initialized with 0 */
+extern sem_t all_cyclists_set_up; /* initialized with 0 */
+extern sem_t go; /* initialized with initial_number_of_cyclists */
+extern sem_t end_simulation; /* initialized with 0 */
 
 /**/
-extern sem_t lock_cyclists_set; /* must be initialized with 1 */
+extern sem_t lock_cyclists_set; /* initialized with 1 */
 extern int cyclists_set;
 /**/
 
@@ -33,7 +33,13 @@ struct thread_info {     /* Used as argument to thread_start() */
 };
 
 
+#ifdef DEBUG
+extern sem_t simulation;
+#endif
+
 /* circuit with 4 tracks */
 extern struct runway_position *runway;
+extern sem_t *tracks; /* Each one initialized with 1 */
+extern int runway_length;
 
 #endif
