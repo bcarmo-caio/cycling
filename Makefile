@@ -1,12 +1,15 @@
 CC=gcc
-CFLAGS=-Wall -std=c11 -pedantic -O4 -Wno-unused-but-set-variable
+CFLAGS=-Wall -Wextra -ansi -pedantic -O2 -Wno-comment
 LDFLAGS=-lpthread
 
-main: cycling.c
+all: clean cycling.c
 	$(CC) $(CFLAGS) $(LDFLAGS) cycling.c -o cycling
 
+debug: cycling.c
+	$(CC) $(CFLAGS) -g  $(LDFLAGS) cycling.c -o cycling
+
 clean:
-	rm -rf cycling
+	rm -rf cycling *.o
 
 report: report.tex
 	pdflatex report.tex
@@ -20,4 +23,4 @@ package: cycling.c Makefile README report.pdf
 	rm -rf ep1-caio-leonardo
 
 purge:
-	rm -rf cycling report.aux report.log ep1-caio-leonardo ep1.tar.gz
+	rm -rf cycling *.o report.aux report.log ep1-caio-leonardo ep1.tar.gz
