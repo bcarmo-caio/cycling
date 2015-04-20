@@ -94,14 +94,14 @@ int main(int argc, char **argv) {
 	 *  a constant of 25km/h
 	 */
 	switch(argv[3][0]) {
-		case 'c':
+		case 'u':
 			g_constant_speed = 1;
 			break;
 		case 'v':
 			g_constant_speed = 0;
 			break;
 		default:
-			handle_error("Speed is not 'c' nor 'v'");
+			handle_error("Speed is not 'u' nor 'v'");
 			break;
 	}
 

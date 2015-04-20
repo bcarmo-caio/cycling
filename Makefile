@@ -18,23 +18,23 @@ CFLAGS=-Wall \
 
 LDFLAGS=-lpthread
 
-OBJS=cycling.o \
-	 cyclist.o \
-	 utils.o
+OBJS=src/cycling.o \
+	 src/cyclist.o \
+	 src/utils.o
 
 BIN=cycling
 
 all: $(OBJS)
 	$(CC) $(OBJS) -o $(BIN) $(LDFLAGS)
 
-debug:CFLAGS+=-g
-debug:CFLAGS+=-DDEBUG
-debug: all
+debug: CFLAGS+=-g
+debug: CFLAGS+=-DDEBUG
+debug: clean all
 
 clean:
 	rm -rf $(BIN) $(OBJS)
 
-%.o: %.c
+src/%.o: src/%.c
 	@echo [CC] $< -o $@ CFLAGS
 	@gcc -c $< -o $@ $(CFLAGS)
 
@@ -49,5 +49,5 @@ package: cycling.c Makefile README report.pdf
 	gzip --best ep1.tar
 	rm -rf ep1-caio-leonardo
 
-purge:
-	rm -rf $(BIN) $(OBJS) report.aux report.log ep1-caio-leonardo ep1.tar.gz
+purge: clean
+	rm -rf report.aux report.log report.pdf ep1-caio-leonardo ep1.tar.gz
