@@ -13,14 +13,14 @@ void handle_error(const char *msg) __attribute__ ((__noreturn__));
 	while(0)
 
 #define Sem_post(sem) do { \
-	if(sem_post(sem) != -1) { \
+	if(sem_post(sem) == -1) { \
 		errno_cpy = errno; \
 		handle_error_en(errno_cpy, "sem_post " # sem); \
 	} \
 	} while(0)
 
 #define Sem_wait(sem) do { \
-	if(sem_wait(sem) != -1) { \
+	if(sem_wait(sem) == -1) { \
 		errno_cpy = errno; \
 		handle_error_en(errno_cpy, "sem_wait " # sem); \
 	} \
