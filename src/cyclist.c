@@ -6,6 +6,7 @@
 #include "cycling.h"
 #include "utils.h"
 
+
 /* thread for a cyclist */
 void *cyclist(void *arg) {
 	int thread_num      = ((struct thread_info *)arg)->thread_num;
@@ -42,10 +43,7 @@ void *cyclist(void *arg) {
 #endif
 
 		/* THREAD INITIALIZED */
-		if(sem_post(&create_thread) == -1) {
-			errno_cpy = errno;
-			handle_error_en(errno_cpy, "sem_post create_thread");
-		}
+		Sem_post(&create_thread);
 
 		/* Tell main that we are ready! */
 		if(sem_post(&all_cyclists_set_up) == -1) {
