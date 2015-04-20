@@ -1,6 +1,6 @@
+#include <stdio.h>
 #include <pthread.h>
 #include <semaphore.h>
-#include <stdio.h>
 #include <errno.h>
 #include "cyclist.h"
 #include "cycling.h"
@@ -60,9 +60,6 @@ void *cyclist(void *arg) {
 			handle_error_en(errno_cpy, "sem_post create_thread");
 		}
 
-
-
-
 	/* main loop for simulation */
 	while(1) {
 		/* waiting for everyone to be set up */
@@ -71,7 +68,13 @@ void *cyclist(void *arg) {
 			handle_error_en(errno_cpy, "sem_wait go");
 		}
 
-/* simulate cyclist here */
+		errno_cpy = pthread_barrier_wait(&bar);
+		if((errno_cpy != PTHREAD_BARRIER_SERIAL_THREAD) &&
+		   (errno_cpy != 0))
+		   handle_error_en(errno_cpy, "barrier_wait bar");
+
+
+		/* simulate cyclist here */
 		if(sem_wait(&all_runway) == -1) {
 			errno_cpy = errno;
 			handle_error_en(errno_cpy, "sem_wait all_runway");
@@ -142,7 +145,7 @@ void *cyclist(void *arg) {
 		}
 		cyclists_set++;
 #ifdef DEBUG
-		printf("Thread %d cyclist %d waiting\n", thread_num, cyclist_id);
+		/*printf("Thread %d cyclist %d waiting\n", thread_num, cyclist_id);*/
 #endif
 
 		if(cyclists_set == current_number_of_cyclists) {
@@ -151,6 +154,9 @@ void *cyclist(void *arg) {
 #ifdef DEBUG
 			printf("Everyone set again!\n");
 #endif
+			errno_cpy = pthread_barrier_destroy(&bar);
+			if(errno_cpy != 0)
+				handle_error_en(errno_cpy, "barrier_destory bar");
 
 			if(sem_post(&lock_cyclists_set) == -1) {
 				errno_cpy = errno;

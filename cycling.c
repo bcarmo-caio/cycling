@@ -45,6 +45,8 @@ sem_t all_runway; /* Must be initialized with 1 */
 /**/
 int runway_length;
 
+pthread_barrier_t bar;
+
 #ifdef DEBUG
 sem_t simulation;
 #endif
@@ -130,9 +132,7 @@ int main(int argc, char **argv) {
 	if(threads == NULL)
 		handle_error("threads = malloc");
 
-	printf("antes\n");
 	init_semaphores();
-	printf("depois\n");
 
 	start = (int *) malloc(initial_number_of_cyclists * sizeof(int));
 	if(start == NULL)
@@ -177,7 +177,7 @@ int main(int argc, char **argv) {
 	}
 	/* NO CODE HERE!!!!! */
 	/* start simulation */
-	for(i = 0; i < 100; i++) {
+	for(i = 0; i < 5; i++) {
 		if(sem_wait(&all_cyclists_set_up) == -1) {
 			errno_cpy = errno;
 			handle_error_en(errno_cpy, "sem_wait all_cyclists_set_up");
@@ -197,13 +197,15 @@ int main(int argc, char **argv) {
 		/*2*/
 		/*1*/
 		/*GOOOOO!*/
-		/* talvez usar pthread_barrier*/
+		errno_cpy = pthread_barrier_init(&bar, 0, current_number_of_cyclists);
+		if(errno_cpy != 0)
+			handle_error_en(errno_cpy, "barrier_init bar");
+
 		for(j = 0; j < current_number_of_cyclists; j++)
 			if(sem_post(&go) == -1) {
 				errno_cpy = errno;
 				handle_error_en(errno_cpy, "sem_post go");
 			}
-
 	/* NO CODE HERE!!!!! */
 	}
 	printf("End iteration %d\n", i);

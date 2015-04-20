@@ -1,7 +1,7 @@
 CC=gcc
+#DO NOT ADD -ansi. -ansi DO NOT SUPPORT pthreads_barrier_*
 CFLAGS=-Wall \
 	   -Wextra \
-	   -ansi \
 	   -pedantic \
 	   -O2 \
 	   -Wno-comment \

@@ -1,6 +1,7 @@
 #ifndef CYCLING_H
 #define CYCLING_H
 
+#include <pthread.h>
 #include <semaphore.h>
 
 extern sem_t create_thread; /* initialized with 0 */
@@ -42,5 +43,7 @@ extern struct runway_position *runway;
 extern sem_t *tracks; /* Each one initialized with 1 */
 extern sem_t all_runway; /* Initialized with 1 */
 extern int runway_length;
+
+extern pthread_barrier_t bar; /* trying to be fair to threads */
 
 #endif
