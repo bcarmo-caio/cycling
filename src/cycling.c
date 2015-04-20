@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
 	}
 	for(i = 0; i < initial_number_of_cyclists; i++)
 		runway[i].position[0] = start[i];
-	memset(&start, 0, initial_number_of_cyclists * sizeof(int));
+	memset(start, 0, initial_number_of_cyclists * sizeof(int));
 	free(start);
 	start = NULL;
 	/* shuffled */
