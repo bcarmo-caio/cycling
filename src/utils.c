@@ -35,9 +35,6 @@ void print_runway(void) {
 	printf("-------------------------------------------------------------"
 			"----\n");
 
-	if(sem_post(&simulation) == -1) {
-		errno_cpy = errno;
-		handle_error_en(errno_cpy, "sem_post simulation");
-	}
+	Sem_post(&simulation);
 }
 #endif /* DEBUG */

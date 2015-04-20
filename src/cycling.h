@@ -33,7 +33,6 @@ struct thread_info {     /* Used as argument to thread_start() */
 	int cyclist_id;      /* Cyclist id */
 };
 
-
 #ifdef DEBUG
 extern sem_t simulation;
 #endif

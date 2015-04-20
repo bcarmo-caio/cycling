@@ -169,26 +169,20 @@ int main(int argc, char **argv) {
 			sprintf(errmsg, "pthread_cread %d for cyclist %d", i, start[i]);
 			handle_error_en(errno_cpy, (const char *) errmsg);
 		}
-		if(sem_wait(&create_thread) == -1) {
-			errno_cpy = errno;
-			handle_error_en(errno_cpy, "sem_wait create_thread");
-		}
+		Sem_wait(&create_thread);
 
 	}
 	/* NO CODE HERE!!!!! */
 	/* start simulation */
 	for(i = 0; i < 5; i++) {
-		if(sem_wait(&all_cyclists_set_up) == -1) {
-			errno_cpy = errno;
-			handle_error_en(errno_cpy, "sem_wait all_cyclists_set_up");
-		}
+		Sem_wait(&all_cyclists_set_up);
 #ifdef DEBUG
 		if(abort_on_start == 1)
 			exit(EXIT_SUCCESS);
 		if(i > 0)
 			printf("End iteration %d\n", i);
 		printf("Iteration %d\n", i + 1);
-		sem_wait(&simulation);
+		Sem_wait(&simulation);
 		printf("Printing runway\n");
 		print_runway();
 		printf("GO!\n");
@@ -202,10 +196,7 @@ int main(int argc, char **argv) {
 			handle_error_en(errno_cpy, "barrier_init bar");
 
 		for(j = 0; j < current_number_of_cyclists; j++)
-			if(sem_post(&go) == -1) {
-				errno_cpy = errno;
-				handle_error_en(errno_cpy, "sem_post go");
-			}
+			Sem_post(&go);
 	/* NO CODE HERE!!!!! */
 	}
 	printf("End iteration %d\n", i);
@@ -214,10 +205,7 @@ int main(int argc, char **argv) {
 
 
 	/* XXX  program stucks here */
-	if(sem_wait(&end_simulation) == -1) {
-		errno_cpy = errno;
-		handle_error_en(errno_cpy, "sem_wait end_simulation");
-	}
+	Sem_wait(&end_simulation);
 
 	for(i = 0; i < initial_number_of_cyclists; i++)	{
 		errno_cpy = pthread_join(threads[i], NULL);
