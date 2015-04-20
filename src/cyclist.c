@@ -6,33 +6,24 @@
 #include "cycling.h"
 #include "utils.h"
 
-
 /* thread for a cyclist */
-void *cyclist(void *arg) {
-	int thread_num      = ((struct thread_info *)arg)->thread_num;
-	int cyclist_id      = ((struct thread_info *)arg)->cyclist_id;
-	int __attribute__ ((__unused__)) constant_speed  = g_constant_speed;
+void *cyclist(void *me) {
 	int errno_cpy;
-	int my_position_runway;
-	int my_next_position_runway;
-	int my_position_runway_bkp;
-	int my_next_position_runway_bkp;
-	int my_position_track;
-	int __attribute__ ((__unused__)) my_lap;
 	int i;
+#define me ((struct thread_info *) me)
 
-	my_position_runway = thread_num - 1;
-	if(my_position_runway == 0)
-		my_next_position_runway = runway_length - 1;
+	me->position_runway = me->thread_num - 1;
+	if(me->position_runway == 0)
+		me->next_position_runway = runway_length - 1;
 	else
-		my_next_position_runway = my_position_runway - 1;
+		me->next_position_runway = me->position_runway - 1;
 
-	my_position_track  = 0;
-	my_lap = 1;
+	me->position_track  = 0;
+	me->lap = 1;
 	cyclists_set++;
 
 #ifdef DEBUG
-	printf("Thread %d cyclist %d waiting\n", thread_num, cyclist_id);
+	printf("Thread %d cyclist %d waiting\n", me->thread_num, me->cyclist_id);
 #endif
 	
 	if(cyclists_set == current_number_of_cyclists) {
@@ -56,51 +47,46 @@ void *cyclist(void *arg) {
 	while(1) {
 		/* waiting for everyone to be set up */
 		Sem_wait(&go);
-
-		errno_cpy = pthread_barrier_wait(&bar);
-		if((errno_cpy != PTHREAD_BARRIER_SERIAL_THREAD) &&
-		   (errno_cpy != 0))
-		   handle_error_en(errno_cpy, "barrier_wait bar");
-
+		Pthread_barrier_wait(&bar);
 
 		/* simulate cyclist here */
 		Sem_wait(&all_runway);
-		Sem_wait(tracks + my_position_runway);
-		Sem_wait(tracks + my_next_position_runway);
+		Sem_wait(tracks + me->position_runway);
+		Sem_wait(tracks + me->next_position_runway);
 		Sem_post(&all_runway);
 
-		my_position_runway_bkp = my_position_runway;
-		my_next_position_runway_bkp = my_next_position_runway;
+		me->position_runway_bkp = me->position_runway;
+		me->next_position_runway_bkp = me->next_position_runway;
 
 		for(i = 0; i < 4; i++)
-			if(runway[my_next_position_runway].position[i] == 0)
+			if(runway[me->next_position_runway].position[i] == 0)
 				break;
 
 		if(i < 4) { /* there a free position =) I will proceed */
-			runway[my_next_position_runway].position[i] = cyclist_id;
-			runway[my_position_runway].position[my_position_track] = 0;
-			my_position_track = i;
+			runway[me->next_position_runway].position[i] = me->cyclist_id;
+			runway[me->position_runway].position[me->position_track] = 0;
+			me->position_track = i;
 
 			/* update my_position_runway*/
-			if(my_position_runway == 0)
+			if(me->position_runway == 0)
 			{
-				my_position_runway = runway_length - 1;
-				my_lap++;
+				me->position_runway = runway_length - 1;
+				me->lap++;
 			}
 			else
-				my_position_runway--;
+				me->position_runway--;
 
 			/* update my_next_position_runway*/
-			if(my_position_runway == 0)
-				my_next_position_runway = runway_length - 1;
+			if(me->position_runway == 0)
+				me->next_position_runway = runway_length - 1;
 			else
-				my_next_position_runway--;
+				me->next_position_runway--;
 		}
 
-		Sem_post(tracks + my_position_runway_bkp);
-		Sem_post(tracks + my_next_position_runway_bkp);
+		Sem_post(tracks + me->position_runway_bkp);
+		Sem_post(tracks + me->next_position_runway_bkp);
 #ifdef DEBUG
-		printf("Thread %d cyclist %d started\n", thread_num, cyclist_id);
+		printf("Thread %d cyclist %d started\n", me->thread_num, me->cyclist_id);
 #endif
 		/* end here */
 
@@ -118,10 +104,7 @@ void *cyclist(void *arg) {
 #ifdef DEBUG
 			printf("Everyone set again!\n");
 #endif
-			errno_cpy = pthread_barrier_destroy(&bar);
-			if(errno_cpy != 0)
-				handle_error_en(errno_cpy, "barrier_destory bar");
-
+			Pthread_barrier_destroy(&bar);
 			Sem_post(&lock_cyclists_set);
 			/* Tell main that we are ready! */
 			Sem_post(&all_cyclists_set_up);
@@ -146,4 +129,5 @@ void *cyclist(void *arg) {
 		}
 #endif
 	pthread_exit(NULL);
+#undef me
 }

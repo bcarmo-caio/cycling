@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
 	int d, i, j, __attribute__ ((__unused__)) debug_flag;
 	int *start = NULL;
 	pthread_t *threads = NULL;
-	struct thread_info tinfo;
+	struct thread_info *tinfo = NULL;
 	char errmsg[200];
 	int errno_cpy;
 	int tmp;
@@ -128,12 +128,6 @@ int main(int argc, char **argv) {
 		handle_error("runway = malloc");
 	memset((void *) runway, 0, d * sizeof(struct runway_position));
 
-	/* allocating 'n' threads. One for each cyclist.*/
-	threads = (pthread_t *)
-		malloc(initial_number_of_cyclists * sizeof(pthread_t));
-	if(threads == NULL)
-		handle_error("threads = malloc");
-
 	init_semaphores();
 
 	start = (int *) malloc(initial_number_of_cyclists * sizeof(int));
@@ -158,15 +152,22 @@ int main(int argc, char **argv) {
 	start = NULL;
 	/* shuffled */
 
+	tinfo = malloc(initial_number_of_cyclists * sizeof(struct thread_info));
+	if(tinfo == NULL)
+		handle_error("malloc tinfo");
+	memset(tinfo, 0, initial_number_of_cyclists * sizeof(struct thread_info));
+
+	for(i = 0; i < initial_number_of_cyclists; i++) {
+		tinfo[i].thread_num = i + 1;
+		tinfo[i].cyclist_id = runway[i].position[0];
+	}
 
 	/* creating threads */
 	for (i = 0; i < initial_number_of_cyclists; i++) {
-		tinfo.thread_num = i + 1;
-		tinfo.cyclist_id = runway[i].position[0];
-		errno_cpy = pthread_create( threads + i, /* pthread_t *thread */
+		errno_cpy = pthread_create( &(tinfo[i].thread_id), /*pthread_t *thread*/
 									NULL, /* const pthread_attr_t *attr */
 									&cyclist, /* void *(*routine) (void *) */
-									(void *) &tinfo); /*void *arg*/
+									(void *) &(tinfo[i])); /*void *arg*/
 		if (errno_cpy != 0)	{
 			sprintf(errmsg, "pthread_cread %d for cyclist %d", i, start[i]);
 			handle_error_en(errno_cpy, (const char *) errmsg);
@@ -193,7 +194,6 @@ int main(int argc, char **argv) {
 		/*1*/
 		/*GOOOOO!*/
 		Pthread_barrier_init(&bar, 0, current_number_of_cyclists);
-
 		for(j = 0; j < current_number_of_cyclists; j++)
 			Sem_post(&go);
 	/* NO CODE HERE!!!!! */

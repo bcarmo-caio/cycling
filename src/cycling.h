@@ -29,8 +29,15 @@ struct runway_position {
 };
 
 struct thread_info {     /* Used as argument to thread_start() */
-	int	thread_num;      /* Application-defined thread # */
-	int cyclist_id;      /* Cyclist id */
+	pthread_t thread_id;
+	int thread_num;
+	int cyclist_id;
+	int position_runway;
+	int next_position_runway;
+	int position_runway_bkp;
+	int next_position_runway_bkp;
+	int position_track;
+	int lap;
 };
 
 #ifdef DEBUG
