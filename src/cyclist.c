@@ -46,25 +46,16 @@ void *cyclist(void *arg) {
 		Sem_post(&create_thread);
 
 		/* Tell main that we are ready! */
-		if(sem_post(&all_cyclists_set_up) == -1) {
-			errno_cpy = errno;
-			handle_error_en(errno_cpy, "sem_post all_cyclists_set_up");
-		}
+		Sem_post(&all_cyclists_set_up);
 	}
 	else
 		/* THREAD INITIALIZED */
-		if(sem_post(&create_thread) == -1) {
-			errno_cpy = errno;
-			handle_error_en(errno_cpy, "sem_post create_thread");
-		}
+		Sem_post(&create_thread);
 
 	/* main loop for simulation */
 	while(1) {
 		/* waiting for everyone to be set up */
-		if(sem_wait(&go) == -1) {
-			errno_cpy = errno;
-			handle_error_en(errno_cpy, "sem_wait go");
-		}
+		Sem_wait(&go);
 
 		errno_cpy = pthread_barrier_wait(&bar);
 		if((errno_cpy != PTHREAD_BARRIER_SERIAL_THREAD) &&
@@ -73,24 +64,10 @@ void *cyclist(void *arg) {
 
 
 		/* simulate cyclist here */
-		if(sem_wait(&all_runway) == -1) {
-			errno_cpy = errno;
-			handle_error_en(errno_cpy, "sem_wait all_runway");
-		}
-		if(sem_wait(tracks + my_position_runway) == -1) {
-			errno_cpy = errno;
-			handle_error_en(errno_cpy, "sem_wait "
-					"track[my_position_runway]");
-		}
-		if(sem_wait(tracks + my_next_position_runway) == -1) {
-			errno_cpy = errno;
-			handle_error_en(errno_cpy, "sem_wait "
-					"track[my_next_position_runway]");
-		}
-		if(sem_post(&all_runway) == -1) {
-			errno_cpy = errno;
-			handle_error_en(errno_cpy, "sem_post all_runway");
-		}
+		Sem_wait(&all_runway);
+		Sem_wait(tracks + my_position_runway);
+		Sem_wait(tracks + my_next_position_runway);
+		Sem_post(&all_runway);
 
 		my_position_runway_bkp = my_position_runway;
 		my_next_position_runway_bkp = my_next_position_runway;
@@ -120,16 +97,8 @@ void *cyclist(void *arg) {
 				my_next_position_runway--;
 		}
 
-		if(sem_post(tracks + my_position_runway_bkp) == -1) {
-			errno_cpy = errno;
-			handle_error_en(errno_cpy, "sem_post "
-					"track[my_position_runway]");
-		}
-		if(sem_post(tracks + my_next_position_runway_bkp) == -1) {
-			errno_cpy = errno;
-			handle_error_en(errno_cpy, "sem_post "
-					"track[my_next_position_runway]");
-		}
+		Sem_post(tracks + my_position_runway_bkp);
+		Sem_post(tracks + my_next_position_runway_bkp);
 #ifdef DEBUG
 		printf("Thread %d cyclist %d started\n", thread_num, cyclist_id);
 #endif
@@ -137,10 +106,7 @@ void *cyclist(void *arg) {
 
 
 		/* get ready for next iteration */
-		if(sem_wait(&lock_cyclists_set) == -1) {
-			errno_cpy = errno;
-			handle_error_en(errno_cpy, "sem_wait lock_cyclists_set");
-		}
+		Sem_wait(&lock_cyclists_set);
 		cyclists_set++;
 #ifdef DEBUG
 		/*printf("Thread %d cyclist %d waiting\n", thread_num, cyclist_id);*/
@@ -156,42 +122,23 @@ void *cyclist(void *arg) {
 			if(errno_cpy != 0)
 				handle_error_en(errno_cpy, "barrier_destory bar");
 
-			if(sem_post(&lock_cyclists_set) == -1) {
-				errno_cpy = errno;
-				handle_error_en(errno_cpy, "sem_post lock_cyclists_set");
-			}
+			Sem_post(&lock_cyclists_set);
 			/* Tell main that we are ready! */
-			if(sem_post(&all_cyclists_set_up) == -1) {
-				errno_cpy = errno;
-				handle_error_en(errno_cpy, "sem_post all_cyclists_set_up");
-			}
+			Sem_post(&all_cyclists_set_up);
 		}
-		if(sem_post(&lock_cyclists_set) == -1) {
-			errno_cpy = errno;
-			handle_error_en(errno_cpy, "sem_post lock_cyclists_set");
-		}
+		Sem_post(&lock_cyclists_set);
 		/* NO CODE HERE!!!! */
 	}
 
 #if 0 /* kill last runner */
-		if(sem_wait(&lock_current_number_of_cyclists) == -1) {
-			errno_cpy = errno;
-			handle_error_en(errno_cpy, "sem_wait lock_current_number_of_cyclists");
-		}
+		Sem_wait(&lock_current_number_of_cyclists);
 		current_number_of_cyclists--;
 		if(current_number_of_cyclists > 0) {
-			if(sem_post(&lock_current_number_of_cyclists) == -1) {
-				errno_cpy = errno;
-				handle_error_en(errno_cpy, "sem_post "
-						"lock_current_number_of_cyclists");
-			}
+			Sem_post(&lock_current_number_of_cyclists);
 		}
 		else {
 			if(current_number_of_cyclists == 0) {
-				if(sem_post(&end_simulation) == -1) {
-					errno_cpy = errno;
-					handle_error_en(errno_cpy, "sem_post end_simulation");
-				}
+				Sem_post(&end_simulation);
 			}
 			else
 				/* Abort now! something weird has happened */
