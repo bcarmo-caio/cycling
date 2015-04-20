@@ -40,6 +40,7 @@ extern sem_t simulation;
 /* circuit with 4 tracks */
 extern struct runway_position *runway;
 extern sem_t *tracks; /* Each one initialized with 1 */
+extern sem_t all_runway; /* Initialized with 1 */
 extern int runway_length;
 
 #endif

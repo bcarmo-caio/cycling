@@ -41,6 +41,7 @@ int initial_number_of_cyclists;
 /**/
 struct runway_position *runway;
 sem_t *tracks; /* Each one must be initialized with 1 */
+sem_t all_runway; /* Must be initialized with 1 */
 /**/
 int runway_length;
 
@@ -121,6 +122,7 @@ int main(int argc, char **argv) {
 				malloc(d * sizeof(struct runway_position));
 	if(!runway)
 		handle_error("runway = malloc");
+	memset((void *) runway, 0, d * sizeof(struct runway_position));
 
 	/* allocating 'n' threads. One for each cyclist.*/
 	threads = (pthread_t *)
@@ -128,54 +130,9 @@ int main(int argc, char **argv) {
 	if(threads == NULL)
 		handle_error("threads = malloc");
 
-	/* initializing semaphores */
-	if(sem_init(&lock_cyclists_set, 0, 1) == -1) {
-		errno_cpy = errno;
-		handle_error_en(errno_cpy, "sem_init lock_cyclists_set");
-	}
-
-	/* Hold everyone */
-	if(sem_init(&go, 0, 0) == -1) {
-		errno_cpy = errno;
-		handle_error_en(errno_cpy, "sem_init go"); /* or not */
-	}
-
-	if(sem_init(&end_simulation, 0, 0) == -1) {
-		errno_cpy = errno;
-		handle_error_en(errno_cpy, "sem_init end_simulation"); /* or not */
-	}
-
-	if(sem_init(&lock_current_number_of_cyclists, 0, 1) == -1) {
-		errno_cpy = errno;
-		handle_error_en(errno_cpy, "sem_init lock_current_number_of_cyclists");
-	}
-
-	if(sem_init(&all_cyclists_set_up, 0, 0) == -1) {
-		errno_cpy = errno;
-		handle_error_en(errno_cpy, "sem_init all_cyclists_set_up");
-	}
-
-	if(sem_init(&create_thread, 0, 0) == -1) {
-		errno_cpy = errno;
-		handle_error_en(errno_cpy, "sem_init create_thread");
-	}
-
-	tracks = (sem_t *) malloc(d * sizeof(sem_t));
-	if(tracks == NULL)
-		handle_error("tracks = malloc");
-	for(i = 0; i < d; i++)
-		if(sem_init(tracks + i, 0, 1) == -1) {
-			errno_cpy = errno;
-			handle_error_en(errno_cpy, "sem_init tracks");
-		}
-
-#ifdef DEBUG
-	if(sem_init(&simulation, 0, 1) == -1) {
-		errno_cpy = errno;
-		handle_error_en(errno_cpy, "sem_init simulation");
-	}
-#endif
-	/* initialized */
+	printf("antes\n");
+	init_semaphores();
+	printf("depois\n");
 
 	start = (int *) malloc(initial_number_of_cyclists * sizeof(int));
 	if(start == NULL)
@@ -212,11 +169,15 @@ int main(int argc, char **argv) {
 			sprintf(errmsg, "pthread_cread %d for cyclist %d", i, start[i]);
 			handle_error_en(errno_cpy, (const char *) errmsg);
 		}
-		sem_wait(&create_thread);
+		if(sem_wait(&create_thread) == -1) {
+			errno_cpy = errno;
+			handle_error_en(errno_cpy, "sem_wait create_thread");
+		}
+
 	}
 	/* NO CODE HERE!!!!! */
 	/* start simulation */
-	for(i = 0; i < 3; i++) {
+	for(i = 0; i < 100; i++) {
 		if(sem_wait(&all_cyclists_set_up) == -1) {
 			errno_cpy = errno;
 			handle_error_en(errno_cpy, "sem_wait all_cyclists_set_up");
@@ -225,8 +186,11 @@ int main(int argc, char **argv) {
 		if(abort_on_start == 1)
 			exit(EXIT_SUCCESS);
 		if(i > 0)
-			printf("End Lap %d\n", i);
-		printf("Lap %d\n", i + 1);
+			printf("End iteration %d\n", i);
+		printf("Iteration %d\n", i + 1);
+		sem_wait(&simulation);
+		printf("Printing runway\n");
+		print_runway();
 		printf("GO!\n");
 #endif
 		/*3*/
@@ -242,7 +206,10 @@ int main(int argc, char **argv) {
 
 	/* NO CODE HERE!!!!! */
 	}
-	printf("End Lap %d\n", i);
+	printf("End iteration %d\n", i);
+	printf("End race\n");
+	return EXIT_SUCCESS;
+
 
 	/* XXX  program stucks here */
 	if(sem_wait(&end_simulation) == -1) {

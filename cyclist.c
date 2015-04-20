@@ -12,11 +12,22 @@ void *cyclist(void *arg) {
 	int cyclist_id      = ((struct thread_info *)arg)->cyclist_id;
 	int __attribute__ ((__unused__)) constant_speed  = g_constant_speed;
 	int errno_cpy;
-	int __attribute__ ((__unused__)) my_position_runway;
-	int __attribute__ ((__unused__)) my_position_track;
+	int my_position_runway;
+	int my_next_position_runway;
+	int my_position_runway_bkp;
+	int my_next_position_runway_bkp;
+	int my_position_track;
+	int __attribute__ ((__unused__)) my_lap;
+	int i;
 
-	my_position_runway = cyclist_id;
+	my_position_runway = thread_num - 1;
+	if(my_position_runway == 0)
+		my_next_position_runway = runway_length - 1;
+	else
+		my_next_position_runway = my_position_runway - 1;
+
 	my_position_track  = 0;
+	my_lap = 1;
 	cyclists_set++;
 
 #ifdef DEBUG
@@ -31,7 +42,10 @@ void *cyclist(void *arg) {
 #endif
 
 		/* THREAD INITIALIZED */
-		sem_post(&create_thread);
+		if(sem_post(&create_thread) == -1) {
+			errno_cpy = errno;
+			handle_error_en(errno_cpy, "sem_post create_thread");
+		}
 
 		/* Tell main that we are ready! */
 		if(sem_post(&all_cyclists_set_up) == -1) {
@@ -41,10 +55,15 @@ void *cyclist(void *arg) {
 	}
 	else
 		/* THREAD INITIALIZED */
-		sem_post(&create_thread);
+		if(sem_post(&create_thread) == -1) {
+			errno_cpy = errno;
+			handle_error_en(errno_cpy, "sem_post create_thread");
+		}
 
 
 
+
+	/* main loop for simulation */
 	while(1) {
 		/* waiting for everyone to be set up */
 		if(sem_wait(&go) == -1) {
@@ -53,19 +72,75 @@ void *cyclist(void *arg) {
 		}
 
 /* simulate cyclist here */
+		if(sem_wait(&all_runway) == -1) {
+			errno_cpy = errno;
+			handle_error_en(errno_cpy, "sem_wait all_runway");
+		}
+		if(sem_wait(tracks + my_position_runway) == -1) {
+			errno_cpy = errno;
+			handle_error_en(errno_cpy, "sem_wait "
+					"track[my_position_runway]");
+		}
+		if(sem_wait(tracks + my_next_position_runway) == -1) {
+			errno_cpy = errno;
+			handle_error_en(errno_cpy, "sem_wait "
+					"track[my_next_position_runway]");
+		}
+		if(sem_post(&all_runway) == -1) {
+			errno_cpy = errno;
+			handle_error_en(errno_cpy, "sem_post all_runway");
+		}
+
+		my_position_runway_bkp = my_position_runway;
+		my_next_position_runway_bkp = my_next_position_runway;
+
+		for(i = 0; i < 4; i++)
+			if(runway[my_next_position_runway].position[i] == 0)
+				break;
+
+		if(i < 4) { /* there a free position =) I will proceed */
+			runway[my_next_position_runway].position[i] = cyclist_id;
+			runway[my_position_runway].position[my_position_track] = 0;
+			my_position_track = i;
+
+			/* update my_position_runway*/
+			if(my_position_runway == 0)
+			{
+				my_position_runway = runway_length - 1;
+				my_lap++;
+			}
+			else
+				my_position_runway--;
+
+			/* update my_next_position_runway*/
+			if(my_position_runway == 0)
+				my_next_position_runway = runway_length - 1;
+			else
+				my_next_position_runway--;
+		}
+
+		if(sem_post(tracks + my_position_runway_bkp) == -1) {
+			errno_cpy = errno;
+			handle_error_en(errno_cpy, "sem_post "
+					"track[my_position_runway]");
+		}
+		if(sem_post(tracks + my_next_position_runway_bkp) == -1) {
+			errno_cpy = errno;
+			handle_error_en(errno_cpy, "sem_post "
+					"track[my_next_position_runway]");
+		}
 #ifdef DEBUG
-		sem_wait(&simulation);
-		printf("!v==0 \n");
 		printf("Thread %d cyclist %d started\n", thread_num, cyclist_id);
-		print_runway();
-		sem_post(&simulation);
 #endif
-/* end here */
+		/* end here */
 
-/* get ready for next iteration */
-		sem_wait(&lock_cyclists_set);
+
+		/* get ready for next iteration */
+		if(sem_wait(&lock_cyclists_set) == -1) {
+			errno_cpy = errno;
+			handle_error_en(errno_cpy, "sem_wait lock_cyclists_set");
+		}
 		cyclists_set++;
-
 #ifdef DEBUG
 		printf("Thread %d cyclist %d waiting\n", thread_num, cyclist_id);
 #endif
@@ -74,7 +149,7 @@ void *cyclist(void *arg) {
 			cyclists_set = 0;
 
 #ifdef DEBUG
-			printf("Everyone set!\n");
+			printf("Everyone set again!\n");
 #endif
 
 			if(sem_post(&lock_cyclists_set) == -1) {
@@ -91,6 +166,7 @@ void *cyclist(void *arg) {
 			errno_cpy = errno;
 			handle_error_en(errno_cpy, "sem_post lock_cyclists_set");
 		}
+		/* NO CODE HERE!!!! */
 	}
 
 #if 0 /* kill last runner */

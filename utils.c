@@ -1,7 +1,8 @@
-#include "utils.h"
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <semaphore.h>
+#include "utils.h"
 
 void handle_error_en(int en, const char *msg) {
 	errno = en;
@@ -18,17 +19,25 @@ void handle_error(const char *msg) {
 #include "cycling.h"
 
 void print_runway(void) {
-	int i, j;
+	int i, j, errno_cpy;
 	char runner[4][10];
-	printf("-----------------------------------------------------------------\n");
+	printf("-------------------------------------------------------------"
+			"----\n");
 	for(i = 0; i < runway_length; i++) {
 		for(j = 0; j < 4; j++)
 			if(runway[i].position[j] == 0)
 				sprintf(runner[j], "--");
 			else
 				sprintf(runner[j], "%d", runway[i].position[j]);
-		printf("|\t%s\t|\t%s\t|\t%s\t|\t%s\t|\n", runner[0], runner[1], runner[2], runner[3]);
+		printf("|\t%s\t|\t%s\t|\t%s\t|\t%s\t|\n", runner[0], runner[1],
+				runner[2], runner[3]);
 	}
-	printf("-----------------------------------------------------------------\n");
+	printf("-------------------------------------------------------------"
+			"----\n");
+
+	if(sem_post(&simulation) == -1) {
+		errno_cpy = errno;
+		handle_error_en(errno_cpy, "sem_post simulation");
+	}
 }
 #endif /* DEBUG */
