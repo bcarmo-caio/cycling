@@ -18,6 +18,8 @@
 #include "cyclist.h"
 
 
+void debug(void);
+
 sem_t create_thread; /* must be initialized with 0*/
 sem_t all_cyclists_set_up; /* must be initialized with 0 */
 sem_t go; /* must be initialized with 0 */
@@ -170,7 +172,6 @@ int main(int argc, char **argv) {
 			handle_error_en(errno_cpy, (const char *) errmsg);
 		}
 		Sem_wait(&create_thread);
-
 	}
 	/* NO CODE HERE!!!!! */
 	/* start simulation */
@@ -191,9 +192,7 @@ int main(int argc, char **argv) {
 		/*2*/
 		/*1*/
 		/*GOOOOO!*/
-		errno_cpy = pthread_barrier_init(&bar, 0, current_number_of_cyclists);
-		if(errno_cpy != 0)
-			handle_error_en(errno_cpy, "barrier_init bar");
+		Pthread_barrier_init(&bar, 0, current_number_of_cyclists);
 
 		for(j = 0; j < current_number_of_cyclists; j++)
 			Sem_post(&go);
@@ -249,6 +248,5 @@ void breaking(void) {
 void update_positioning_data(void) {
 }
 */
-void debug(void);
 void debug(void) {
 }
