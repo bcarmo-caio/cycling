@@ -34,7 +34,7 @@ pthread_barrier_t bar;
 
 int main(int argc, char **argv) {
 	int i, j, c;
-	int current_lap = 0;/*XXX change go 1 */
+	int current_lap = 0;/*XXX change to 1 */
 	int completed_current_lap;
 	int last[3] = {-1, -1, -1};
 	int *final_position;
@@ -136,6 +136,7 @@ int main(int argc, char **argv) {
 
 	/*** Start simulation ***/
 	Sem_wait(&all_cyclists_set_up);
+	printf("Race started!\n");
 	for (i = 0; 1; i++) {
 #ifdef DEBUG
 		printf("\nIteration %d:\n", i);
@@ -216,10 +217,10 @@ int main(int argc, char **argv) {
 			final_position[current_number_of_cyclists-1] = tinfo[last[0]].cyclist_id;
 			runway[tinfo[last[0]].position_runway][tinfo[last[0]].position_track] = 0;
 			tinfo[last[0]].kill_self = 1;
-			if (current_number_of_cyclists >= 1)
-				printf("\nCyclist %d eliminated\n", tinfo[last[0]].cyclist_id);
-			if (current_number_of_cyclists >= 2)
+			if (current_number_of_cyclists >= 2) {
+				printf("\nCyclist %d eliminated!\n", tinfo[last[0]].cyclist_id);
 				printf("The second last is cyclist %d\n", tinfo[last[1]].cyclist_id);
+			}
 			if (current_number_of_cyclists >= 3)
 				printf("The third last is cyclist %d\n", tinfo[last[2]].cyclist_id);
 			current_lap++;
@@ -264,9 +265,9 @@ int main(int argc, char **argv) {
 			if (debug_time == 1/*XXX change 1 to 200*/) {
 				debug_time = 0;
 				printf("\nDebug:\n");
-				printf("C. ID | Laps | Current position\n");
+				printf("Cyclist | Lap | Position\n");
 				for (c = 0; c < initial_number_of_cyclists; c++) {
-					printf("%5d | %4d | ", tinfo[c].cyclist_id, tinfo[c].completed_laps);
+					printf("%7d | %3d | ", tinfo[c].cyclist_id, tinfo[c].completed_laps);
 					switch (tinfo[c].status) {
 						case BROKEN:
 							printf("Broken\n");
@@ -280,14 +281,14 @@ int main(int argc, char **argv) {
 							break;
 					}
 				}
-				printf("\n");
 			}
 		}
 	}
 
-	printf("\nRace ended!\nFinal standings:\n");
+	printf("\nRace ended!\n\n");
+	printf("Final standings:\n");
 	for (i = 0; i < initial_number_of_cyclists; i++)
-		printf("%dº: %d\n", i + 1, final_position[i]);
+		printf("%d: Cyclist %d\n", i + 1, final_position[i]);
 
 	/*** Join threads ***/
 	for(i = 0; i < initial_number_of_cyclists; i++)	{

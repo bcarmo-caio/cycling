@@ -19,7 +19,7 @@ void handle_error(const char *msg) {
 #include "cycling.h"
 
 void print_runway(void) {
-	int i, j, errno_cpy;
+	int i, j;
 	char runner[4][10];
 	printf("-------------------------------------------------------------"
 			"----\n");
@@ -35,4 +35,4 @@ void print_runway(void) {
 	printf("-------------------------------------------------------------"
 			"----\n");
 }
-#endif /* DEBUG */
+#endif
