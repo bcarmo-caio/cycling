@@ -6,7 +6,7 @@
 #include "cycling.h"
 #include "utils.h"
 
-/* thread for a cyclist */
+/* Thread for a cyclist */
 void *cyclist(void *me) {
 	int errno_cpy;
 	int i;
@@ -43,13 +43,13 @@ void *cyclist(void *me) {
 		/* THREAD INITIALIZED */
 		Sem_post(&create_thread);
 
-	/* main loop for simulation */
+	/* Main loop for simulation */
 	while(1) {
-		/* waiting for everyone to be set up */
+		/* Waiting for everyone to be set up */
 		Sem_wait(&go);
 		Pthread_barrier_wait(&bar);
 
-		/* simulate cyclist here */
+		/* Simulate cyclist here */
 		Sem_wait(&all_runway);
 		Sem_wait(tracks + me->position_runway);
 		Sem_wait(tracks + me->next_position_runway);
@@ -59,15 +59,15 @@ void *cyclist(void *me) {
 		me->next_position_runway_bkp = me->next_position_runway;
 
 		for(i = 0; i < 4; i++)
-			if(runway[me->next_position_runway].position[i] == 0)
+			if(runway[me->next_position_runway][i] == 0)
 				break;
 
-		if(i < 4) { /* there a free position =) I will proceed */
-			runway[me->next_position_runway].position[i] = me->cyclist_id;
-			runway[me->position_runway].position[me->position_track] = 0;
+		if(i < 4) { /* There a free position =) I will proceed */
+			runway[me->next_position_runway][i] = me->cyclist_id;
+			runway[me->position_runway][me->position_track] = 0;
 			me->position_track = i;
 
-			/* update my_position_runway*/
+			/* Update my_position_runway*/
 			if(me->position_runway == 0)
 			{
 				me->position_runway = runway_length - 1;
@@ -76,7 +76,7 @@ void *cyclist(void *me) {
 			else
 				me->position_runway--;
 
-			/* update my_next_position_runway*/
+			/* Update my_next_position_runway*/
 			if(me->position_runway == 0)
 				me->next_position_runway = runway_length - 1;
 			else
@@ -88,10 +88,10 @@ void *cyclist(void *me) {
 #ifdef DEBUG
 		printf("Thread %d cyclist %d started\n", me->thread_num, me->cyclist_id);
 #endif
-		/* end here */
+		/* End here */
 
 
-		/* get ready for next iteration */
+		/* Get ready for next iteration */
 		Sem_wait(&lock_cyclists_set);
 		cyclists_set++;
 #ifdef DEBUG
@@ -113,7 +113,7 @@ void *cyclist(void *me) {
 		/* NO CODE HERE!!!! */
 	}
 
-#if 0 /* kill last runner */
+#if 0 /* Kill last runner */
 		Sem_wait(&lock_current_number_of_cyclists);
 		current_number_of_cyclists--;
 		if(current_number_of_cyclists > 0) {

@@ -25,10 +25,10 @@ void print_runway(void) {
 			"----\n");
 	for(i = 0; i < runway_length; i++) {
 		for(j = 0; j < 4; j++)
-			if(runway[i].position[j] == 0)
+			if(runway[i][j] == 0)
 				sprintf(runner[j], "--");
 			else
-				sprintf(runner[j], "%d", runway[i].position[j]);
+				sprintf(runner[j], "%d", runway[i][j]);
 		printf("|\t%s\t|\t%s\t|\t%s\t|\t%s\t|\n", runner[0], runner[1],
 				runner[2], runner[3]);
 	}
