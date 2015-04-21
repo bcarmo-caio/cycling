@@ -1,9 +1,3 @@
-/*XXX tirei o -Wno_unused_but_set do makefile
- * se quiser deixar uma var sem usar, faca
- * __attribute__ ((__unused__)) var
- * para deixar explicito que devemos fazer algo depois
- * */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,12 +43,20 @@ int runway_length;
 
 pthread_barrier_t bar;
 
+#define BROKEN 0
+#define ELIMINATED -1
+#define RUNNING 1
+int current_lap = 1;
+int next_breaking_attempt = 4;
+int debug_time = 0;
+int b, c;
+
 #ifdef DEBUG
 sem_t simulation;
 #endif
 
 int main(int argc, char **argv) {
-	int d, i, j, __attribute__ ((__unused__)) debug_flag;
+	int d, i, j, debug_flag = 0;
 	int *start = NULL;
 	pthread_t *threads = NULL;
 	struct thread_info tinfo;
@@ -106,11 +108,7 @@ int main(int argc, char **argv) {
 			handle_error("Speed is not 'u' nor 'v'");
 			break;
 	}
-
-	if (argc == 5 && (strcmp(argv[4], "-d")) == 0)
-		debug_flag = 1;
-	else
-		debug_flag = 0;
+	if (argc == 5 && (strcmp(argv[4], "-d")) == 0) debug_flag = 1;
 
 #ifdef DEBUG
 	abort_on_start = 0;
@@ -188,6 +186,84 @@ int main(int argc, char **argv) {
 		print_runway();
 		printf("GO!\n");
 #endif
+		/* ELIMINATION */
+		completed_current_lap = 0;
+		for (c = 0; c < initial_number_of_cyclists; c++) {
+			if ([c]->lap >= current_lap)
+				completed_current_lap++;
+		if (completed_current_lap == current_number_of_cyclists) {
+			last[0] = 0;
+			/* Find last 3 cyclists */
+			for (c = 0; c < initial_number_of_cyclists; c++)
+				if ([c]->status == RUNNING)
+					if ([c]->lap < last[0]->lap) last[0] = c;
+					else if ([c]->lap == [last[0]]->lap &&
+							[c]->position_runway < [last[0]]->position_runway) last[0] = c;
+			for (c = 0; c < initial_number_of_cyclists; c++)
+				if (c != last[0] && [c]->status == RUNNING)
+					if ([c]->lap < last[0]->lap) last[0] = c;
+					else if ([c]->lap == [last[0]]->lap &&
+							[c]->position_runway < [last[0]]->position_runway) last[1] = c;
+			for (c = 0; c < initial_number_of_cyclists; c++)
+				if (c != last[0] && c!= last[1] && [c]->status == RUNNING)
+					if ([c]->lap < last[0]->lap) last[0] = c;
+					else if ([c]->lap == [last[0]]->lap &&
+							[c]->position_runway < [last[0]]->position_runway) last[2] = c;
+			printf("Cyclist %d eliminated\n", );
+			eliminate last one; update array final_position; update status_array;
+
+			print last one;
+			search penultimo and antepenultimo in the arrayzão and print;
+			current_lap++;
+		}
+
+		/* BREAKING */
+		if (current_number_of_cyclists > 3) { 
+			for (c = 0; c < initial_number_of_cyclists; c++)
+				if ([c]->lap == next_breaking_attempt)
+					break;
+			if [c]->lap == next_breaking_attempt {
+				if (rand() % 100 == 42) {
+					c = rand() % initial_number_of_cyclists;
+					while (1) {
+						if ([c]->status == RUNNING) {
+							breake() {
+								[c]->status = BROKEN;
+								printf("Cyclist %d just broke!\n", c);
+								// remove from track
+							}
+							break;
+						}
+						c = (c + 1) % initial_number_of_cyclists;
+					}
+				}
+				next_breaking_attempt += 4;
+			}
+		}
+
+		/* DEBUG */
+		if (debug_flag) {
+			debug_time++;
+			if (debug_time == 200) {
+				debug_time = 0;
+				printf("Debug:\n");
+				for (c = 0; c < initial_number_of_cyclists; c++) {
+					printf("%d: %d ", [c]->id, [c]->lap);
+					switch ([c]->status) {
+						case BROKEN:
+							printf("Broken\n");
+							break;
+						case ELIMINATED:
+							printf("Eliminated\n");
+							break;
+						case RUNNING:
+							printf("%d\n", [c]->position_runway);
+							break;
+					}
+				}
+			}
+		}
+
 		/*3*/
 		/*2*/
 		/*1*/
@@ -200,10 +276,13 @@ int main(int argc, char **argv) {
 	}
 	printf("End iteration %d\n", i);
 	printf("End race\n");
+	printf("\nClassificação final:\n");
+	for (i = 0; i < initial_number_of_cyclists; i++)
+		printf("%dº: %d\n", i + 1, final_position[i]);
 	return EXIT_SUCCESS;
 
 
-	/* XXX  program stucks here */
+	/* XXX program gets stuck here */
 	Sem_wait(&end_simulation);
 
 	for(i = 0; i < initial_number_of_cyclists; i++)	{
@@ -217,36 +296,4 @@ int main(int argc, char **argv) {
 	
 	pthread_exit(NULL);
 	return 0;
-}
-
-/*
-simulate_lap(lap_number) {
-	if (debug_flag && lap_number % 200 == 0) {
-		/* debug /
-		debug();
-	}
-	if (lap_number % 4 == 0) {
-		/* breaking /
-		breaking();
-		update_positioning_data();
-	}
-	if (lap_number % 2 == 0) {
-		/* elimination /
-		while (lap_not_over) {
-			simulate_72ms();
-			pthread_barrier_wait(72ms_barrier);
-		}
-	}
-}
-
-void simulate_72ms(void) {
-}
-
-void breaking(void) {
-}
-
-void update_positioning_data(void) {
-}
-*/
-void debug(void) {
 }
