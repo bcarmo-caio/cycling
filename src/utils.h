@@ -31,9 +31,12 @@ void handle_error(const char *msg) __attribute__ ((__noreturn__));
 		errno_cpy = errno; \
 		handle_error_en(errno_cpy, "sem_post(" # sem ")"); \
 	} \
+	} while(0)
+#if 0	
 	else \
 		perror("sem_post(" # sem ")"); \
 	} while(0)
+#endif
 
 #define Sem_wait(sem, ts, thread) do { \
 	Clock_gettime(CLOCK_REALTIME, ts); \
@@ -43,11 +46,14 @@ void handle_error(const char *msg) __attribute__ ((__noreturn__));
 		sprintf(errmsg, "sem_timedwait(%s, %d)", # sem, thread); \
 		handle_error_en(errno_cpy, errmsg); \
 	} \
+	} while(0)
+#if 0
 	else \
 		errno_cpy = errno; \
 		sprintf(errmsg, "sem_timedwait(%s, %d)", # sem, thread); \
 		perror(errmsg); \
 	} while(0)
+#endif
 
 /* Macros for barriers */
 #define Pthread_barrier_init(bar, shared, num) do { \

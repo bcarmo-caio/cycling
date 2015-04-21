@@ -50,18 +50,17 @@ void *cyclist(void *me) {
 		Pthread_barrier_wait(&bar);
 
 		/* This cyclist was eliminated or broke, destroy thread */
-		/*Sem_wait(&all_runway, &(me->ts), me->thread_num);*/
+		Sem_wait(&all_runway, &(me->ts), me->thread_num);
 #ifdef DEBUG
-		printf("Thread %d cyclist %d started\n", me->thread_num, me->cyclist_id);
+		/*printf("Thread %d cyclist %d started\n", me->thread_num, me->cyclist_id);*/
 #endif
 		if (me->kill_self) {
-			Sem_wait(&lock_current_number_of_cyclists, &(me->ts), me->thread_num);
 			current_number_of_cyclists--;
-			Sem_post(&lock_current_number_of_cyclists);
 			if (current_number_of_cyclists == 0) {
 				Pthread_barrier_destroy(&bar);
 				Sem_post(&all_cyclists_set_up);
 			}
+			Sem_post(&all_runway);
 			pthread_exit(NULL);
 		}
 
@@ -70,7 +69,6 @@ void *cyclist(void *me) {
 			me->advanced_half_meter = 1;
 		}
 		else if (!variable_speed || me->speed == 50 || (me->speed == 25 && me->advanced_half_meter)) {
-			Sem_wait(&all_runway, &(me->ts), me->thread_num);
 			Sem_wait(tracks + me->position_runway, &(me->ts), me->thread_num);
 			Sem_wait(tracks + me->next_position_runway, &(me->ts), me->thread_num);
 			Sem_post(&all_runway);
@@ -117,7 +115,7 @@ void *cyclist(void *me) {
 		Sem_post(tracks + me->position_runway_bkp);
 		Sem_post(tracks + me->next_position_runway_bkp);
 #ifdef DEBUG
-		printf("Thread %d cyclist %d ended\n", me->thread_num, me->cyclist_id);
+		/*printf("Thread %d cyclist %d ended\n", me->thread_num, me->cyclist_id);*/
 #endif
 		/* End here */
 
