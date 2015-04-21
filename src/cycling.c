@@ -23,17 +23,17 @@ sem_t end_simulation; /* Must be initialized with 0 */
 sem_t lock_cyclists_set; /* Must be initialized with 1 */
 int cyclists_set;
 
+int initial_number_of_cyclists;
 sem_t lock_current_number_of_cyclists;
 int current_number_of_cyclists;
-
-int variable_speed;
-int initial_number_of_cyclists;
 
 /* Circuit with 4 tracks */
 int **runway;
 sem_t *tracks; /* Each one must be initialized with 1 */
 sem_t all_runway; /* Must be initialized with 1 */
 int runway_length;
+
+int variable_speed;
 
 pthread_barrier_t bar;
 
@@ -152,9 +152,20 @@ int main(int argc, char **argv) {
 		Sem_wait(&create_thread);
 	}
 	/* NO CODE HERE!!!!! */
-	/* Start simulation */
-	for(i = 0; i < 5; i++) {
+
+	/*** Start simulation ***/
+	Sem_wait(&all_cyclists_set_up);
+	/* while (1) { */ for(i = 0; i < 5; i++) {
+		/*** Run threads, one iteration ***/
+		/*3*/
+		/*2*/
+		/*1*/
+		/*GOOOOO!*/
+		Pthread_barrier_init(&bar, 0, current_number_of_cyclists);
+		for(j = 0; j < current_number_of_cyclists; j++) Sem_post(&go);
+		/* NO CODE HERE!!!!! */
 		Sem_wait(&all_cyclists_set_up);
+
 #ifdef DEBUG
 		if(abort_on_start == 1)
 			exit(EXIT_SUCCESS);
@@ -166,7 +177,8 @@ int main(int argc, char **argv) {
 		print_runway();
 		printf("GO!\n");
 #endif
-		/* ELIMINATION */
+
+		/*** Elimination ***/
 		completed_current_lap = 0;
 		for (c = 0; c < initial_number_of_cyclists; c++)
 			if (tinfo[c].lap >= current_lap)
@@ -178,27 +190,30 @@ int main(int argc, char **argv) {
 				if (tinfo[c].status == RUNNING) {
 					if (tinfo[c].lap < tinfo[last[0]].lap) last[0] = c;
 					else if (tinfo[c].lap == tinfo[last[0]].lap &&
-							tinfo[c].position_runway < tinfo[last[0]].position_runway) last[0] = c;
+							tinfo[c].position_runway <
+							tinfo[last[0]].position_runway) last[0] = c;
 				}
 			for (c = 0; c < initial_number_of_cyclists; c++)
 				if (c != last[0] && tinfo[c].status == RUNNING) {
 					if (tinfo[c].lap < tinfo[last[0]].lap) last[0] = c;
 					else if (tinfo[c].lap == tinfo[last[0]].lap &&
-							tinfo[c].position_runway < tinfo[last[0]].position_runway) last[1] = c;
+							tinfo[c].position_runway <
+							tinfo[last[0]].position_runway) last[1] = c;
 				}
 			for (c = 0; c < initial_number_of_cyclists; c++)
 				if (c != last[0] && c!= last[1] && tinfo[c].status == RUNNING) {
 					if (tinfo[c].lap < tinfo[last[0]].lap) last[0] = c;
 					else if (tinfo[c].lap == tinfo[last[0]].lap &&
-							tinfo[c].position_runway < tinfo[last[0]].position_runway) last[2] = c;
+							tinfo[c].position_runway <
+							tinfo[last[0]].position_runway) last[2] = c;
 				}
-			/*eliminate last one; update array final_position; update status_array;
+			/*eliminate last one; update array final_position; update status;
 			printf("Cyclist %d eliminated\n", last[0]);
 			search penultimo and antepenultimo in the arrayzão and print;
 			current_lap++;*/
 		}
 
-		/* BREAKING */
+		/*** Breaking ***/
 		if (current_number_of_cyclists > 3) { 
 			for (c = 0; c < initial_number_of_cyclists; c++)
 				if (tinfo[c].lap == next_breaking_attempt)
@@ -222,7 +237,7 @@ int main(int argc, char **argv) {
 			}
 		}
 
-		/* DEBUG */
+		/*** Debug ***/
 		if (debug_flag) {
 			debug_time++;
 			if (debug_time == 200) {
@@ -245,15 +260,6 @@ int main(int argc, char **argv) {
 				}
 			}
 		}
-
-		/*3*/
-		/*2*/
-		/*1*/
-		/*GOOOOO!*/
-		Pthread_barrier_init(&bar, 0, current_number_of_cyclists);
-		for(j = 0; j < current_number_of_cyclists; j++)
-			Sem_post(&go);
-	/* NO CODE HERE!!!!! */
 	}
 	printf("End iteration %d\n", i);
 	printf("End race\n");
@@ -266,6 +272,7 @@ int main(int argc, char **argv) {
 	/* XXX program gets stuck here */
 	Sem_wait(&end_simulation);
 
+	/*** Join threads ***/
 	for(i = 0; i < initial_number_of_cyclists; i++)	{
 		errno_cpy = pthread_join(threads[i], NULL);
 		if(errno_cpy != 0) {

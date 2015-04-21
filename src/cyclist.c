@@ -18,7 +18,7 @@ void *cyclist(void *me) {
 	else
 		me->next_position_runway = me->position_runway - 1;
 
-	me->position_track  = 0;
+	me->position_track = 0;
 	me->lap = 1;
 	cyclists_set++;
 
@@ -86,10 +86,10 @@ void *cyclist(void *me) {
 		Sem_post(tracks + me->position_runway_bkp);
 		Sem_post(tracks + me->next_position_runway_bkp);
 #ifdef DEBUG
-		printf("Thread %d cyclist %d started\n", me->thread_num, me->cyclist_id);
+		printf("Thread %d cyclist %d started\n",
+				me->thread_num, me->cyclist_id);
 #endif
 		/* End here */
-
 
 		/* Get ready for next iteration */
 		Sem_wait(&lock_cyclists_set);
