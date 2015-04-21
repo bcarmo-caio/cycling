@@ -24,7 +24,7 @@ OBJS=src/cycling.o \
 
 BIN=cycling
 
-all: $(OBJS)
+all: clean $(OBJS)
 	$(CC) $(OBJS) -o $(BIN) $(LDFLAGS)
 
 debug: CFLAGS+=-g

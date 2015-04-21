@@ -27,7 +27,6 @@ struct thread_info {
 extern sem_t create_thread; /* Initialized with 0 */
 extern sem_t all_cyclists_set_up; /* Initialized with 0 */
 extern sem_t go; /* Initialized with 0 */
-extern sem_t end_simulation; /* Initialized with 0 */
 
 extern sem_t lock_cyclists_set; /* Initialized with 1 */
 extern int cyclists_set;
@@ -45,9 +44,5 @@ extern int runway_length;
 extern int variable_speed;
 
 extern pthread_barrier_t bar; /* Trying to be fair to threads */
-
-#ifdef DEBUG
-extern sem_t simulation;
-#endif
 
 #endif

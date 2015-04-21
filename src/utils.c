@@ -34,7 +34,5 @@ void print_runway(void) {
 	}
 	printf("-------------------------------------------------------------"
 			"----\n");
-
-	Sem_post(&simulation);
 }
 #endif /* DEBUG */

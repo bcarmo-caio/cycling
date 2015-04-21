@@ -48,13 +48,11 @@ void handle_error(const char *msg) __attribute__ ((__noreturn__));
 		handle_error_en(errno_cpy, "pthread_barrier_destory(" # bar ")"); \
 	} while(0)
 
-
 /* Initializing all semaphores */
-#define pre_init_semaphores do { \
+#define init_semaphores() do { \
 	Sem_init(&lock_cyclists_set, 0, 1); \
 	/* Hold everyone */ \
 	Sem_init(&go, 0, 0); \
-	Sem_init(&end_simulation, 0, 0); \
 	Sem_init(&lock_current_number_of_cyclists, 0, 1); \
 	Sem_init(&all_cyclists_set_up, 0, 0); \
 	Sem_init(&create_thread, 0, 0); \
@@ -63,29 +61,11 @@ void handle_error(const char *msg) __attribute__ ((__noreturn__));
 		handle_error("tracks = malloc"); \
 	for(i = 0; i < runway_length; i++) \
 		Sem_init(tracks + i, 0, 1); \
-	Sem_init(&all_runway, 0, 1);
-
-#ifdef DEBUG
-#define pos_init_semaphores  \
-	\
-	Sem_init(&simulation, 0, 1); \
-	printf("semaphores initialized [with debug]\n"); \
+	Sem_init(&all_runway, 0, 1); \
 	} while(0)
-#else
-#define pos_init_semaphores \
-	\
-	printf("semaphores initialized\n"); \
-	} while(0)
-#endif /* DEBUG */
-
-#define init_semaphores() \
-	pre_init_semaphores \
-	pos_init_semaphores 
-	
 
 #ifdef DEBUG
 void print_runway(void);
 #endif
-
 
 #endif /* UTILS_H */

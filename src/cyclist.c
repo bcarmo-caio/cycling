@@ -8,16 +8,16 @@
 
 /* Thread for a cyclist */
 void *cyclist(void *me) {
+#define me ((struct thread_info *) me)
 	int errno_cpy;
 	int i;
-#define me ((struct thread_info *) me)
 
+	/* Initialization */
 	me->position_runway = me->thread_num - 1;
 	if(me->position_runway == 0)
 		me->next_position_runway = runway_length - 1;
 	else
 		me->next_position_runway = me->position_runway - 1;
-
 	me->position_track = 0;
 	me->lap = 1;
 	me->completed_laps = -1;
@@ -25,25 +25,17 @@ void *cyclist(void *me) {
 	me->kill_self = 0;
 	cyclists_set++;
 
-#ifdef DEBUG
-	printf("Thread %d cyclist %d waiting\n", me->thread_num, me->cyclist_id);
-#endif
-	
 	if(cyclists_set == current_number_of_cyclists) {
 		cyclists_set = 0;
 
-#ifdef DEBUG
-		printf("Everyone set!\n");
-#endif
-
-		/* THREAD INITIALIZED */
+		/* Thread initialized */
 		Sem_post(&create_thread);
 
 		/* Tell main that we are ready! */
 		Sem_post(&all_cyclists_set_up);
 	}
 	else
-		/* THREAD INITIALIZED */
+		/* Thread initialized */
 		Sem_post(&create_thread);
 
 	/* Main loop for simulation */
@@ -52,10 +44,15 @@ void *cyclist(void *me) {
 		Sem_wait(&go);
 		Pthread_barrier_wait(&bar);
 
+		/* This cyclist was eliminated or broke, destroy thread */
 		if (me->kill_self) {
 			Sem_wait(&lock_current_number_of_cyclists);
 			current_number_of_cyclists--;
 			Sem_post(&lock_current_number_of_cyclists);
+			if (current_number_of_cyclists == 0) {
+				Pthread_barrier_destroy(&bar);
+				Sem_post(&all_cyclists_set_up);
+			}
 			pthread_exit(NULL);
 		}
 
@@ -72,7 +69,7 @@ void *cyclist(void *me) {
 			if(runway[me->next_position_runway][i] == 0)
 				break;
 
-		if(i < 4) { /* There a free position =) I will proceed */
+		if(i < 4) { /* There is a free position =) I will proceed */
 			runway[me->next_position_runway][i] = me->cyclist_id;
 			runway[me->position_runway][me->position_track] = 0;
 			me->position_track = i;
@@ -96,22 +93,18 @@ void *cyclist(void *me) {
 		Sem_post(tracks + me->position_runway_bkp);
 		Sem_post(tracks + me->next_position_runway_bkp);
 #ifdef DEBUG
-		printf("Thread %d cyclist %d started\n",
-				me->thread_num, me->cyclist_id);
+		printf("Thread %d cyclist %d started\n", me->thread_num, me->cyclist_id);
 #endif
 		/* End here */
 
 		/* Get ready for next iteration */
 		Sem_wait(&lock_cyclists_set);
 		cyclists_set++;
-#ifdef DEBUG
-		/*printf("Thread %d cyclist %d waiting\n", thread_num, cyclist_id);*/
-#endif
 
 		if(cyclists_set == current_number_of_cyclists) {
 			cyclists_set = 0;
 #ifdef DEBUG
-			printf("Everyone set again!\n");
+			printf("Everyone set!\n");
 #endif
 			Pthread_barrier_destroy(&bar);
 			Sem_post(&lock_cyclists_set);
@@ -122,21 +115,6 @@ void *cyclist(void *me) {
 		/* NO CODE HERE!!!! */
 	}
 
-#if 0 /* Kill last runner */
-		Sem_wait(&lock_current_number_of_cyclists);
-		current_number_of_cyclists--;
-		if(current_number_of_cyclists > 0) {
-			Sem_post(&lock_current_number_of_cyclists);
-		}
-		else {
-			if(current_number_of_cyclists == 0) {
-				Sem_post(&end_simulation);
-			}
-			else
-				/* Abort now! something weird has happened */
-				handle_error("current_number_of_cyclists < 0");
-		}
-#endif
 	pthread_exit(NULL);
 #undef me
 }
