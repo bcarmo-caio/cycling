@@ -1,5 +1,5 @@
 CC=gcc
-#DO NOT ADD -ansi. -ansi DO NOT SUPPORT pthreads_barrier_*
+#DO NOT ADD -ansi. -ansi DO NOT SUPPORT pthreads_barrier_* 
 CFLAGS=-Wall \
 	   -Wextra \
 	   -O2 \
