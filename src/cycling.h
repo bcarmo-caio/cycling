@@ -25,10 +25,10 @@ struct thread_info {
 	int completed_laps;
 	int status;
 	int kill_self;
+	int speed;
+	int advanced_half_meter;
 	struct timespec ts;
 };
-
-struct timespec ts;
 
 extern sem_t create_thread; /* Initialized with 0 */
 extern sem_t all_cyclists_set_up; /* Initialized with 0 */

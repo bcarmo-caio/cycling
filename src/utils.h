@@ -7,7 +7,7 @@ void handle_error(const char *msg) __attribute__ ((__noreturn__));
 #ifdef WAIT_SEM_TIMEOUT
 #error "WAIT_SEM_TIMEOUT redefinition!"
 #else
-#define WAIT_SEM_TIMEOUT 2
+#define WAIT_SEM_TIMEOUT 5
 #endif
 
 #define Clock_gettime(clock, ts) do { \
@@ -31,6 +31,8 @@ void handle_error(const char *msg) __attribute__ ((__noreturn__));
 		errno_cpy = errno; \
 		handle_error_en(errno_cpy, "sem_post(" # sem ")"); \
 	} \
+	else \
+		perror("sem_post(" # sem ")"); \
 	} while(0)
 
 #define Sem_wait(sem, ts, thread) do { \
@@ -41,6 +43,10 @@ void handle_error(const char *msg) __attribute__ ((__noreturn__));
 		sprintf(errmsg, "sem_timedwait(%s, %d)", # sem, thread); \
 		handle_error_en(errno_cpy, errmsg); \
 	} \
+	else \
+		errno_cpy = errno; \
+		sprintf(errmsg, "sem_timedwait(%s, %d)", # sem, thread); \
+		perror(errmsg); \
 	} while(0)
 
 /* Macros for barriers */

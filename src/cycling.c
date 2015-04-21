@@ -36,8 +36,9 @@ pthread_barrier_t bar;
 
 int main(int argc, char **argv) {
 	int i, j, c;
-	int current_lap = 0;/*XXX change to 1 */
+	int current_lap = 1;
 	int completed_current_lap;
+	int someone_eliminated;
 	int last[3] = {-1, -1, -1};
 	int *final_position;
 	int next_breaking_attempt = 4;
@@ -157,6 +158,7 @@ int main(int argc, char **argv) {
 		Sem_wait(&all_cyclists_set_up, &ts, MAIN_THREAD_ID);
 
 		/*** Elimination ***/
+		someone_eliminated = 0;
 		completed_current_lap = 0;
 		for (c = 0; c < initial_number_of_cyclists; c++)
 			if (tinfo[c].completed_laps >= current_lap)
@@ -215,6 +217,7 @@ int main(int argc, char **argv) {
 				}
 			}
 			/* Eliminate */
+			someone_eliminated = 1;
 			tinfo[last[0]].status = ELIMINATED;
 			final_position[current_number_of_cyclists-1] = tinfo[last[0]].cyclist_id;
 			runway[tinfo[last[0]].position_runway][tinfo[last[0]].position_track] = 0;
@@ -229,13 +232,12 @@ int main(int argc, char **argv) {
 		}
 
 		/*** Breaking ***/
-		if (current_number_of_cyclists > 3) {/*XXX what happens when someone was eliminated this iteration?*/
-			next_breaking_attempt = 0;/*XXX remove this line*/
+		if (current_number_of_cyclists - someone_eliminated > 3) {
 			for (c = 0; c < initial_number_of_cyclists; c++)
 				if (tinfo[c].completed_laps == next_breaking_attempt)
 					break;
 			if (c < initial_number_of_cyclists) {
-				if (0) {/*rand() % 100 == 42) XXX substitute if condition for the commented code*/
+				if (rand() % 100 == 42) {
 					c = rand() % initial_number_of_cyclists;
 					while (1) {
 						if (tinfo[c].status == RUNNING) {
