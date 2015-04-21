@@ -26,18 +26,27 @@ void handle_error(const char *msg) __attribute__ ((__noreturn__));
 	} \
 	} while(0)
 
+/*#define PRINT_SEM_POST_OK_AND_NOK*/
+#ifdef PRINT_SEM_POST_OK_AND_NOK
+#define Sem_post(sem) do { \
+	if(sem_post(sem) == -1) { \
+		errno_cpy = errno; \
+		handle_error_en(errno_cpy, "sem_post(" # sem ")"); \
+	} \
+	else \
+		perror("sem_post(" # sem ")"); \
+	} while(0)
+#else
 #define Sem_post(sem) do { \
 	if(sem_post(sem) == -1) { \
 		errno_cpy = errno; \
 		handle_error_en(errno_cpy, "sem_post(" # sem ")"); \
 	} \
 	} while(0)
-#if 0	
-	else \
-		perror("sem_post(" # sem ")"); \
-	} while(0)
-#endif
+#endif /* PRINT_SEM_OK_AND_NOK */
 
+/*#define PRINT_SEM_WAIT_OK_AND_NOK*/
+#ifdef PRINT_SEM_WAIT_OK_AND_NOK
 #define Sem_wait(sem, ts, thread) do { \
 	Clock_gettime(CLOCK_REALTIME, ts); \
 	(*ts).tv_sec += WAIT_SEM_TIMEOUT; \
@@ -46,12 +55,20 @@ void handle_error(const char *msg) __attribute__ ((__noreturn__));
 		sprintf(errmsg, "sem_timedwait(%s, %d)", # sem, thread); \
 		handle_error_en(errno_cpy, errmsg); \
 	} \
-	} while(0)
-#if 0
 	else \
 		errno_cpy = errno; \
 		sprintf(errmsg, "sem_timedwait(%s, %d)", # sem, thread); \
 		perror(errmsg); \
+	} while(0)
+#else
+#define Sem_wait(sem, ts, thread) do { \
+	Clock_gettime(CLOCK_REALTIME, ts); \
+	(*ts).tv_sec += WAIT_SEM_TIMEOUT; \
+	if(sem_timedwait(sem, ts) == -1) { \
+		errno_cpy = errno; \
+		sprintf(errmsg, "sem_timedwait(%s, %d)", # sem, thread); \
+		handle_error_en(errno_cpy, errmsg); \
+	} \
 	} while(0)
 #endif
 
