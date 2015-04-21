@@ -4,6 +4,10 @@
 #include <pthread.h>
 #include <semaphore.h>
 
+#define BROKEN 0
+#define ELIMINATED -1
+#define RUNNING 1
+
 /* Used as argument to thread_start() */
 struct thread_info {
 	pthread_t thread_id;
@@ -15,7 +19,9 @@ struct thread_info {
 	int next_position_runway_bkp;
 	int position_track;
 	int lap;
+	int completed_laps;
 	int status;
+	int kill_self;
 };
 
 extern sem_t create_thread; /* Initialized with 0 */

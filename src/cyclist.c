@@ -20,6 +20,9 @@ void *cyclist(void *me) {
 
 	me->position_track = 0;
 	me->lap = 1;
+	me->completed_laps = -1;
+	me->status = RUNNING;
+	me->kill_self = 0;
 	cyclists_set++;
 
 #ifdef DEBUG
@@ -49,6 +52,13 @@ void *cyclist(void *me) {
 		Sem_wait(&go);
 		Pthread_barrier_wait(&bar);
 
+		if (me->kill_self) {
+			Sem_wait(&lock_current_number_of_cyclists);
+			current_number_of_cyclists--;
+			Sem_post(&lock_current_number_of_cyclists);
+			pthread_exit(NULL);
+		}
+
 		/* Simulate cyclist here */
 		Sem_wait(&all_runway);
 		Sem_wait(tracks + me->position_runway);
@@ -67,16 +77,16 @@ void *cyclist(void *me) {
 			runway[me->position_runway][me->position_track] = 0;
 			me->position_track = i;
 
-			/* Update my_position_runway*/
-			if(me->position_runway == 0)
-			{
+			/* Update my_position_runway */
+			if(me->position_runway == 0) {
 				me->position_runway = runway_length - 1;
 				me->lap++;
+				me->completed_laps++;
 			}
 			else
 				me->position_runway--;
 
-			/* Update my_next_position_runway*/
+			/* Update my_next_position_runway */
 			if(me->position_runway == 0)
 				me->next_position_runway = runway_length - 1;
 			else
@@ -100,7 +110,6 @@ void *cyclist(void *me) {
 
 		if(cyclists_set == current_number_of_cyclists) {
 			cyclists_set = 0;
-
 #ifdef DEBUG
 			printf("Everyone set again!\n");
 #endif

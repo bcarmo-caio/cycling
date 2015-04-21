@@ -11,10 +11,6 @@
 #include "cycling.h"
 #include "cyclist.h"
 
-#define BROKEN 0
-#define ELIMINATED -1
-#define RUNNING 1
-
 sem_t create_thread; /* Must be initialized with 0 */
 sem_t all_cyclists_set_up; /* Must be initialized with 0 */
 sem_t go; /* Must be initialized with 0 */
@@ -98,12 +94,15 @@ int main(int argc, char **argv) {
 			abort_on_start = 1;
 #endif
 
-	/* Creating circuit with 4 tracks and length 'd' */
-	runway = malloc(runway_length * sizeof(int *) * 4*sizeof(int));
+	/* Creating circuit with 4 tracks and length 'runway_length' */
+	runway = malloc(runway_length * sizeof(int *));
+	for (i = 0; i < runway_length; i++) runway[i] = malloc(4*sizeof(int));
 	if(!runway) handle_error("runway = malloc");
-	memset((void *) runway, 0, runway_length * sizeof(int *) * 4*sizeof(int));
+	for (i = 0; i < runway_length; i++) runway[i][0] = runway[i][1] = runway[i][2] = runway[i][3] = 0;
+
+	/* Creating array to store the final positions of every cyclist */
 	final_position = malloc(runway_length * sizeof(int));
-	memset((void *) runway, 0, runway_length * sizeof(int));
+	memset((void *) final_position, 0, runway_length * sizeof(int));
 
 	init_semaphores();
 
@@ -114,9 +113,8 @@ int main(int argc, char **argv) {
 	/* Shuffle start */
 	for(i = 0; i < initial_number_of_cyclists; i++)
 		start[i] = i + 1;
-	/* http://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle */
-	for(i = initial_number_of_cyclists - 1; i >= 1; i--)
-	{
+	/* http://en.wikipedia.org/wiki/Fisher-Yates_shuffle */
+	for(i = initial_number_of_cyclists - 1; i >= 1; i--) {
 		j = rand() % (i + 1);
 		tmp = start[i];
 		start[i] = start[j];
@@ -178,14 +176,15 @@ int main(int argc, char **argv) {
 		printf("GO!\n");
 #endif
 
-		/*** Elimination ***/
+		/*
+		/*** Elimination ***
 		completed_current_lap = 0;
 		for (c = 0; c < initial_number_of_cyclists; c++)
 			if (tinfo[c].lap >= current_lap)
 				completed_current_lap++;
 		if (completed_current_lap == current_number_of_cyclists) {
 			last[0] = 0;
-			/* Find last 3 cyclists */
+			/* Find last 3 cyclists *
 			for (c = 0; c < initial_number_of_cyclists; c++)
 				if (tinfo[c].status == RUNNING) {
 					if (tinfo[c].lap < tinfo[last[0]].lap) last[0] = c;
@@ -210,24 +209,26 @@ int main(int argc, char **argv) {
 			/*eliminate last one; update array final_position; update status;
 			printf("Cyclist %d eliminated\n", last[0]);
 			search penultimo and antepenultimo in the arrayzão and print;
-			current_lap++;*/
-		}
+			current_lap++;*
+		}*/
 
 		/*** Breaking ***/
-		if (current_number_of_cyclists > 3) { 
+		if (current_number_of_cyclists > 3) {
+			next_breaking_attempt = 0;/*XXX remove this line*/
 			for (c = 0; c < initial_number_of_cyclists; c++)
-				if (tinfo[c].lap == next_breaking_attempt)
+				if (tinfo[c].completed_laps == next_breaking_attempt)
 					break;
-			if (tinfo[c].lap == next_breaking_attempt) {
-				if (rand() % 100 == 42) {
+			if (tinfo[c].completed_laps == next_breaking_attempt) {
+				if (1){/*rand() % 100 == 42) {XXX substitute 1 for the commented code*/
 					c = rand() % initial_number_of_cyclists;
 					while (1) {
 						if (tinfo[c].status == RUNNING) {
-							/*breake() {
-								tinfo[c].status = BROKEN;
-								printf("Cyclist %d just broke!\n", c);
-								// remove from track
-							}*/
+							tinfo[c].status = BROKEN;
+							final_position[current_number_of_cyclists-1] =
+								tinfo[c].cyclist_id;
+							runway[tinfo[c].position_runway][tinfo[c].position_track] = 0;
+							tinfo[c].kill_self = 1;
+							printf("Cyclist %d just broke!\n", tinfo[c].cyclist_id);
 							break;
 						}
 						c = (c + 1) % initial_number_of_cyclists;
@@ -240,11 +241,12 @@ int main(int argc, char **argv) {
 		/*** Debug ***/
 		if (debug_flag) {
 			debug_time++;
-			if (debug_time == 200) {
+			if (debug_time == 1/*XXX change 1 to 200*/) {
 				debug_time = 0;
-				printf("Debug:\n");
+				printf("\nDebug:\n");
+				printf("C. ID | Laps | Current position\n");
 				for (c = 0; c < initial_number_of_cyclists; c++) {
-					printf("%d: %d ", tinfo[c].cyclist_id, tinfo[c].lap);
+					printf("%5d | %4d | ", tinfo[c].cyclist_id, tinfo[c].completed_laps);
 					switch (tinfo[c].status) {
 						case BROKEN:
 							printf("Broken\n");
@@ -258,6 +260,7 @@ int main(int argc, char **argv) {
 							break;
 					}
 				}
+				printf("\n");
 			}
 		}
 	}
