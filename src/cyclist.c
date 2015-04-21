@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <errno.h>
@@ -23,6 +24,8 @@ void *cyclist(void *me) {
 	me->completed_laps = -1;
 	me->status = RUNNING;
 	me->kill_self = 0;
+	if (variable_speed) me->speed = 25;
+	me->advanced_half_meter = 0;
 	cyclists_set++;
 
 	if(cyclists_set == current_number_of_cyclists) {
@@ -57,41 +60,51 @@ void *cyclist(void *me) {
 		}
 
 		/* Simulate cyclist here */
-		Sem_wait(&all_runway);
-		Sem_wait(tracks + me->position_runway);
-		Sem_wait(tracks + me->next_position_runway);
-		Sem_post(&all_runway);
-
-		me->position_runway_bkp = me->position_runway;
-		me->next_position_runway_bkp = me->next_position_runway;
-
-		for(i = 0; i < 4; i++)
-			if(runway[me->next_position_runway][i] == 0)
-				break;
-
-		if(i < 4) { /* There is a free position =) I will proceed */
-			runway[me->next_position_runway][i] = me->cyclist_id;
-			runway[me->position_runway][me->position_track] = 0;
-			me->position_track = i;
-
-			/* Update my_position_runway */
-			if(me->position_runway == 0) {
-				me->position_runway = runway_length - 1;
-				me->lap++;
-				me->completed_laps++;
-			}
-			else
-				me->position_runway--;
-
-			/* Update my_next_position_runway */
-			if(me->position_runway == 0)
-				me->next_position_runway = runway_length - 1;
-			else
-				me->next_position_runway--;
+		if (variable_speed && me->speed == 25 && !me->advanced_half_meter) {
+			me->advanced_half_meter = 1;
 		}
+		else if (!variable_speed || me->speed == 50 || (me->speed == 25 && me->advanced_half_meter)) {
+			Sem_wait(&all_runway);
+			Sem_wait(tracks + me->position_runway);
+			Sem_wait(tracks + me->next_position_runway);
+			Sem_post(&all_runway);
 
-		Sem_post(tracks + me->position_runway_bkp);
-		Sem_post(tracks + me->next_position_runway_bkp);
+			me->advanced_half_meter = 0;
+			me->position_runway_bkp = me->position_runway;
+			me->next_position_runway_bkp = me->next_position_runway;
+
+			for(i = 0; i < 4; i++)
+				if(runway[me->next_position_runway][i] == 0)
+					break;
+
+			if(i < 4) { /* There is a free position =) I will proceed */
+				runway[me->next_position_runway][i] = me->cyclist_id;
+				runway[me->position_runway][me->position_track] = 0;
+				me->position_track = i;
+
+				/* Update my_position_runway */
+				if(me->position_runway == 0) {
+					me->position_runway = runway_length - 1;
+					me->lap++;
+					me->completed_laps++;
+					if (variable_speed && me->completed_laps >= 1) {
+						if (rand() % 2 == 0) me->speed = 25;
+						else me->speed = 50;
+					}
+				}
+				else
+					me->position_runway--;
+
+				/* Update my_next_position_runway */
+				if(me->position_runway == 0)
+					me->next_position_runway = runway_length - 1;
+				else
+					me->next_position_runway--;
+			}
+
+			Sem_post(tracks + me->position_runway_bkp);
+			Sem_post(tracks + me->next_position_runway_bkp);
+		}
 #ifdef DEBUG
 		printf("Thread %d cyclist %d started\n", me->thread_num, me->cyclist_id);
 #endif

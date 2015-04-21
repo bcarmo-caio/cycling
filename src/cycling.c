@@ -231,12 +231,11 @@ int main(int argc, char **argv) {
 
 		/*** Breaking ***/
 		if (current_number_of_cyclists - someone_eliminated > 3) {
-			next_breaking_attempt = 1;/*XXX remove this line*/
 			for (c = 0; c < initial_number_of_cyclists; c++)
 				if (tinfo[c].completed_laps == next_breaking_attempt)
 					break;
 			if (c < initial_number_of_cyclists) {
-				if (1) {/*rand() % 100 == 42) XXX substitute if condition*/
+				if (rand() % 100 == 42) {
 					c = rand() % initial_number_of_cyclists;
 					while (1) {
 						if (tinfo[c].status == RUNNING) {
