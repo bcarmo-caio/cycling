@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <time.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <errno.h>
@@ -10,6 +11,7 @@
 void *cyclist(void *me) {
 #define me ((struct thread_info *) me)
 	int errno_cpy;
+	char errmsg[200];
 	int i;
 
 	/* Initialization */
@@ -41,25 +43,24 @@ void *cyclist(void *me) {
 	/* Main loop for simulation */
 	while(1) {
 		/* Waiting for everyone to be set up */
-		Sem_wait(&go);
+		Sem_wait(&go, &(me->ts), me->thread_num);
 		Pthread_barrier_wait(&bar);
 
 		/* This cyclist was eliminated or broke, destroy thread */
+		Sem_wait(&all_runway, &(me->ts), me->thread_num);
 		if (me->kill_self) {
-			Sem_wait(&lock_current_number_of_cyclists);
 			current_number_of_cyclists--;
-			Sem_post(&lock_current_number_of_cyclists);
 			if (current_number_of_cyclists == 0) {
 				Pthread_barrier_destroy(&bar);
 				Sem_post(&all_cyclists_set_up);
 			}
+			Sem_post(&all_runway);
 			pthread_exit(NULL);
 		}
 
 		/* Simulate cyclist here */
-		Sem_wait(&all_runway);
-		Sem_wait(tracks + me->position_runway);
-		Sem_wait(tracks + me->next_position_runway);
+		Sem_wait(tracks + me->position_runway, &(me->ts), me->thread_num);
+		Sem_wait(tracks + me->next_position_runway, &(me->ts), me->thread_num);
 		Sem_post(&all_runway);
 
 		me->position_runway_bkp = me->position_runway;
@@ -98,7 +99,7 @@ void *cyclist(void *me) {
 		/* End here */
 
 		/* Get ready for next iteration */
-		Sem_wait(&lock_cyclists_set);
+		Sem_wait(&lock_cyclists_set, &(me->ts), me->thread_num);
 		cyclists_set++;
 
 		if(cyclists_set == current_number_of_cyclists) {

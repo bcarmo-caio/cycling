@@ -1,12 +1,15 @@
 #ifndef CYCLING_H
 #define CYCLING_H
 
+#include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
 
 #define BROKEN 0
 #define ELIMINATED -1
 #define RUNNING 1
+
+#define MAIN_THREAD_ID 0
 
 /* Used as argument to thread_start() */
 struct thread_info {
@@ -22,7 +25,10 @@ struct thread_info {
 	int completed_laps;
 	int status;
 	int kill_self;
+	struct timespec ts;
 };
+
+struct timespec ts;
 
 extern sem_t create_thread; /* Initialized with 0 */
 extern sem_t all_cyclists_set_up; /* Initialized with 0 */

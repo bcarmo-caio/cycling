@@ -11,6 +11,8 @@
 #include "cycling.h"
 #include "cyclist.h"
 
+struct timespec ts;
+
 sem_t create_thread; /* Must be initialized with 0 */
 sem_t all_cyclists_set_up; /* Must be initialized with 0 */
 sem_t go; /* Must be initialized with 0 */
@@ -42,7 +44,7 @@ int main(int argc, char **argv) {
 	int debug_flag = 0;
 	int debug_time = 0;
 	int *start = NULL;
-	pthread_t *threads = NULL;
+	/*pthread_t *threads = NULL;*/
 	struct thread_info *tinfo = NULL;
 	char errmsg[200];
 	int errno_cpy;
@@ -130,12 +132,12 @@ int main(int argc, char **argv) {
 			sprintf(errmsg, "pthread_create %d for cyclist %d", i, start[i]);
 			handle_error_en(errno_cpy, (const char *) errmsg);
 		}
-		Sem_wait(&create_thread);
+		Sem_wait(&create_thread, &ts, MAIN_THREAD_ID);
 	}
 	/* NO CODE HERE!!!!! */
 
 	/*** Start simulation ***/
-	Sem_wait(&all_cyclists_set_up);
+	Sem_wait(&all_cyclists_set_up, &ts, MAIN_THREAD_ID);
 	printf("Race started!\n");
 	for (i = 0; 1; i++) {
 #ifdef DEBUG
@@ -152,7 +154,7 @@ int main(int argc, char **argv) {
 		Pthread_barrier_init(&bar, 0, current_number_of_cyclists);
 		for(j = 0; j < current_number_of_cyclists; j++) Sem_post(&go);
 		/* NO CODE HERE!!!!! */
-		Sem_wait(&all_cyclists_set_up);
+		Sem_wait(&all_cyclists_set_up, &ts, MAIN_THREAD_ID);
 
 		/*** Elimination ***/
 		completed_current_lap = 0;
@@ -275,9 +277,11 @@ int main(int argc, char **argv) {
 						case ELIMINATED:
 							printf("Eliminated\n");
 							break;
-						default:
 						case RUNNING:
 							printf("%d\n", tinfo[c].position_runway);
+							break;
+						default:
+							handle_error("Cyclist status unknown");
 							break;
 					}
 				}
@@ -291,15 +295,15 @@ int main(int argc, char **argv) {
 		printf("%d: Cyclist %d\n", i + 1, final_position[i]);
 
 	/*** Join threads ***/
-	for(i = 0; i < initial_number_of_cyclists; i++)	{
-		errno_cpy = pthread_join(threads[i], NULL);
-		if(errno_cpy != 0) {
-			sprintf(errmsg, "Error joining thread %d id %0lx",
-					i, (unsigned long int) threads[i]);
-			handle_error(errmsg);
-		}
-	}
+	/*for(i = 0; i < initial_number_of_cyclists; i++)	{*/
+	/*errno_cpy = pthread_join(threads[i], NULL);*/
+	/*if(errno_cpy != 0) {*/
+	/*sprintf(errmsg, "Error joining thread %d id %0lx",*/
+	/*i, (unsigned long int) threads[i]);*/
+	/*handle_error(errmsg);*/
+	/*}*/
+	/*}*/
 	
-	pthread_exit(NULL);
+	/*pthread_exit(NULL);*/
 	return 0;
 }

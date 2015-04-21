@@ -2,8 +2,8 @@ CC=gcc
 #DO NOT ADD -ansi. -ansi DO NOT SUPPORT pthreads_barrier_*
 CFLAGS=-Wall \
 	   -Wextra \
-	   -pedantic \
 	   -O2 \
+	   -pedantic \
 	   -Wno-comment \
 	   -Winit-self \
 	   -Wmissing-braces \
@@ -16,7 +16,8 @@ CFLAGS=-Wall \
 	   -Winline \
 	   -Wshadow
 
-LDFLAGS=-lpthread
+LDFLAGS=-lpthread \
+		-lrt
 
 OBJS=src/cycling.o \
 	 src/cyclist.o \

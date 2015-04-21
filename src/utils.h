@@ -4,6 +4,19 @@
 void handle_error_en(int en, const char *msg) __attribute__ ((__noreturn__));
 void handle_error(const char *msg) __attribute__ ((__noreturn__));
 
+#ifdef WAIT_SEM_TIMEOUT
+#error "WAIT_SEM_TIMEOUT redefinition!"
+#else
+#define WAIT_SEM_TIMEOUT 2
+#endif
+
+#define Clock_gettime(clock, ts) do { \
+	if (clock_gettime(clock, ts) == -1) { \
+		errno_cpy = errno; \
+		handle_error_en(errno_cpy, "clock_gettime(" # clock ", " # ts ")"); \
+	} \
+	} while (0)
+
 /* Macros for semaphores */
 #define Sem_init(sem, shared, num) do { \
 	if(sem_init(sem, shared, num) == -1) { \
@@ -20,10 +33,13 @@ void handle_error(const char *msg) __attribute__ ((__noreturn__));
 	} \
 	} while(0)
 
-#define Sem_wait(sem) do { \
-	if(sem_wait(sem) == -1) { \
+#define Sem_wait(sem, ts, thread) do { \
+	Clock_gettime(CLOCK_REALTIME, ts); \
+	(*ts).tv_sec += WAIT_SEM_TIMEOUT; \
+	if(sem_timedwait(sem, ts) == -1) { \
 		errno_cpy = errno; \
-		handle_error_en(errno_cpy, "sem_wait(" # sem ")"); \
+		sprintf(errmsg, "sem_timedwait(%s, %d)", # sem, thread); \
+		handle_error_en(errno_cpy, errmsg); \
 	} \
 	} while(0)
 
