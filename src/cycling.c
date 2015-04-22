@@ -323,10 +323,11 @@ int main(int argc, char **argv) {
 	printf("Final standings:\n");
 	for (i = 0; i < initial_number_of_cyclists; i++)
 		printf("%d: Cyclist %d\n", i + 1, final_position[i]);
-#endif
+#else
 	printf("\nouro para ciclista %d\n", final_position[0]);
 	printf("\nprata para ciclista %d\n", final_position[1]);
 	printf("\nbronze para ciclista %d\n\n", final_position[2]);
+#endif
 	
 	/*pthread_exit(NULL);*/
 	return 0;
