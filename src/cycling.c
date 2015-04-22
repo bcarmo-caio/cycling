@@ -324,9 +324,9 @@ int main(int argc, char **argv) {
 	for (i = 0; i < initial_number_of_cyclists; i++)
 		printf("%d: Cyclist %d\n", i + 1, final_position[i]);
 #endif
-	printf("ouro para ciclista %d\n", final_position[0]);
-	printf("prata para ciclista %d\n", final_position[1]);
-	printf("bronze para ciclista %d\n", final_position[2]);
+	printf("\nouro para ciclista %d\n", final_position[0]);
+	printf("\nprata para ciclista %d\n", final_position[1]);
+	printf("\nbronze para ciclista %d\n\n", final_position[2]);
 	
 	/*pthread_exit(NULL);*/
 	return 0;
