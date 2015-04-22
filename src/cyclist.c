@@ -34,14 +34,14 @@ void *cyclist(void *me) {
 		cyclists_set = 0;
 
 		/* Thread initialized */
-		Sem_post(&create_thread);
+		Sem_post(&create_thread, me->thread_num);
 
 		/* Tell main that we are ready! */
-		Sem_post(&all_cyclists_set_up);
+		Sem_post(&all_cyclists_set_up, me->thread_num);
 	}
 	else
 		/* Thread initialized */
-		Sem_post(&create_thread);
+		Sem_post(&create_thread, me->thread_num);
 
 	/* Main loop for simulation */
 	while(1) {
@@ -58,9 +58,9 @@ void *cyclist(void *me) {
 			current_number_of_cyclists--;
 			if (current_number_of_cyclists == 0) {
 				Pthread_barrier_destroy(&bar);
-				Sem_post(&all_cyclists_set_up);
+				Sem_post(&all_cyclists_set_up, me->thread_num);
 			}
-			Sem_post(&all_runway);
+			Sem_post(&all_runway, me->thread_num);
 			pthread_exit(NULL);
 		}
 
@@ -71,7 +71,7 @@ void *cyclist(void *me) {
 		else if (!variable_speed || me->speed == 50 || (me->speed == 25 && me->advanced_half_meter)) {
 			Sem_wait(tracks + me->position_runway, &(me->ts), me->thread_num);
 			Sem_wait(tracks + me->next_position_runway, &(me->ts), me->thread_num);
-			Sem_post(&all_runway);
+			Sem_post(&all_runway, me->thread_num);
 
 			me->advanced_half_meter = 0;
 			me->position_runway_bkp = me->position_runway;
@@ -91,10 +91,8 @@ void *cyclist(void *me) {
 					me->position_runway = runway_length - 1;
 					me->lap++;
 					me->completed_laps++;
-					if (variable_speed && me->completed_laps >= 1) {
-						if (rand() % 2 == 0) me->speed = 25;
-						else me->speed = 50;
-					}
+					if (variable_speed && me->completed_laps >= 1)
+						me->speed = (( rand() % 2) + 1) * 25;
 				}
 				else
 					me->position_runway--;
@@ -105,15 +103,13 @@ void *cyclist(void *me) {
 				else
 					me->next_position_runway--;
 			}
-			else
-				me->position_runway--;
 
-			Sem_post(tracks + me->position_runway_bkp);
-			Sem_post(tracks + me->next_position_runway_bkp);
+			Sem_post(tracks + me->position_runway_bkp, me->thread_num);
+			Sem_post(tracks + me->next_position_runway_bkp, me->thread_num);
 		}
 
-		Sem_post(tracks + me->position_runway_bkp);
-		Sem_post(tracks + me->next_position_runway_bkp);
+		Sem_post(tracks + me->position_runway_bkp, me->thread_num);
+		Sem_post(tracks + me->next_position_runway_bkp, me->thread_num);
 #ifdef DEBUG
 		/*printf("Thread %d cyclist %d ended\n", me->thread_num, me->cyclist_id);*/
 #endif
@@ -129,14 +125,12 @@ void *cyclist(void *me) {
 			printf("Everyone set!\n");
 #endif
 			Pthread_barrier_destroy(&bar);
-			Sem_post(&lock_cyclists_set);
+			Sem_post(&lock_cyclists_set, me->thread_num);
 			/* Tell main that we are ready! */
-			Sem_post(&all_cyclists_set_up);
+			Sem_post(&all_cyclists_set_up, me->thread_num);
 		}
-		Sem_post(&lock_cyclists_set);
+		Sem_post(&lock_cyclists_set, me->thread_num);
 		/* NO CODE HERE!!!! */
 	}
-
-	pthread_exit(NULL);
 #undef me
 }

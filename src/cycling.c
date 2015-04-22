@@ -140,6 +140,7 @@ int main(int argc, char **argv) {
 	/*** Start simulation ***/
 	Sem_wait(&all_cyclists_set_up, &ts, MAIN_THREAD_ID);
 	printf("Race started!\n");
+	/*  MAIN LOOP  */
 	for (i = 0; 1; i++) {
 #ifdef DEBUG
 		printf("\nIteration %d:\n", i);
@@ -153,7 +154,7 @@ int main(int argc, char **argv) {
 		/*1*/
 		/*GOOOOO!*/
 		Pthread_barrier_init(&bar, 0, current_number_of_cyclists);
-		for(j = 0; j < current_number_of_cyclists; j++) Sem_post(&go);
+		for(j = 0; j < current_number_of_cyclists; j++) Sem_post(&go, MAIN_THREAD_ID);
 		/* NO CODE HERE!!!!! */
 		Sem_wait(&all_cyclists_set_up, &ts, MAIN_THREAD_ID);
 

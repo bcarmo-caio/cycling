@@ -26,26 +26,31 @@ void handle_error(const char *msg) __attribute__ ((__noreturn__));
 	} \
 	} while(0)
 
-/*#define PRINT_SEM_POST_OK_AND_NOK*/
+#define PRINT_SEM_POST_OK_AND_NOK
 #ifdef PRINT_SEM_POST_OK_AND_NOK
-#define Sem_post(sem) do { \
+#define Sem_post(sem, thread) do { \
 	if(sem_post(sem) == -1) { \
 		errno_cpy = errno; \
-		handle_error_en(errno_cpy, "sem_post(" # sem ")"); \
+		sprintf(errmsg, "sem_post(%s, %d)", # sem, thread); \
+		handle_error_en(errno_cpy, errmsg); \
 	} \
 	else \
-		perror("sem_post(" # sem ")"); \
+		errno_cpy = errno; \
+		sprintf(errmsg, "sem_post(%s, %d)", # sem, thread); \
+		errno = errno_cpy; \
+		perror(errmsg); \
 	} while(0)
 #else
 #define Sem_post(sem) do { \
 	if(sem_post(sem) == -1) { \
 		errno_cpy = errno; \
-		handle_error_en(errno_cpy, "sem_post(" # sem ")"); \
+		sprintf(errmsg, "sem_post(%s, %d)", # sem, thread); \
+		handle_error_en(errno_cpy, errmsg); \
 	} \
 	} while(0)
 #endif /* PRINT_SEM_OK_AND_NOK */
 
-/*#define PRINT_SEM_WAIT_OK_AND_NOK*/
+#define PRINT_SEM_WAIT_OK_AND_NOK
 #ifdef PRINT_SEM_WAIT_OK_AND_NOK
 #define Sem_wait(sem, ts, thread) do { \
 	Clock_gettime(CLOCK_REALTIME, ts); \
@@ -58,6 +63,7 @@ void handle_error(const char *msg) __attribute__ ((__noreturn__));
 	else \
 		errno_cpy = errno; \
 		sprintf(errmsg, "sem_timedwait(%s, %d)", # sem, thread); \
+		errno = errno_cpy; \
 		perror(errmsg); \
 	} while(0)
 #else
