@@ -126,7 +126,6 @@ int main(int argc, char **argv) {
 	}
 
 	init_semaphores();
-	sem_init(&xavaska, 0, 0);
 
 	/* Creating threads */
 	for (i = 0; i < initial_number_of_cyclists; i++) {
@@ -160,12 +159,11 @@ int main(int argc, char **argv) {
 		/*1*/
 		/*GOOOOO!*/
 		/*printf("current_number_of_cyclists %d\n", current_number_of_cyclists);*/
-		pthread_barrier_init(&bar, 0, current_number_of_cyclists);
-		for(i = 0; i < current_number_of_cyclists; i++) sem_post(&go);
-		/*for(j = 0; j < current_number_of_cyclists+100; j++) Sem_post(&go, MAIN_THREAD_ID);*/
+		Pthread_barrier_init(&bar, 0, current_number_of_cyclists);
+		for(i = 0; i < current_number_of_cyclists; i++) Sem_post(&go, MAIN_THREAD_ID);
 		/* NO CODE HERE!!!!! */
-		Sem_wait(&xavaska, &ts, MAIN_THREAD_ID);
-		pthread_barrier_destroy(&bar);
+		Sem_wait(&all_cyclists_set_up, &ts, MAIN_THREAD_ID);
+		Pthread_barrier_destroy(&bar);
 
 		/*** Elimination ***/
 		someone_eliminated = 0;
@@ -241,13 +239,12 @@ int main(int argc, char **argv) {
 				printf("\nCyclist %d (thread %d) eliminated!\n", tinfo[last[0]].cyclist_id, tinfo[last[0]].thread_num);
 				printf("The second last is cyclist %d (thread %d)\n", tinfo[last[1]].cyclist_id, tinfo[last[0]].thread_num);
 #else
-				/*printf("\nCyclist %d eliminated!\n", tinfo[last[0]].cyclist_id);*/
-				/*printf("The second last is cyclist %d\n", tinfo[last[1]].cyclist_id);*/
+				printf("\nCyclist %d eliminated!\n", tinfo[last[0]].cyclist_id);
+				printf("The second last is cyclist %d\n", tinfo[last[1]].cyclist_id);
 #endif
 			}
 			if (current_number_of_cyclists >= 3)
-				/*printf("The third last is cyclist %d\n", tinfo[last[2]].cyclist_id);*/
-			/*printf("volta ++\n");*/
+				printf("The third last is cyclist %d\n", tinfo[last[2]].cyclist_id);
 			current_lap++;
 		}
 
@@ -319,16 +316,6 @@ int main(int argc, char **argv) {
 	printf("Final standings:\n");
 	for (i = 0; i < initial_number_of_cyclists; i++)
 		printf("%d: Cyclist %d\n", i + 1, final_position[i]);
-
-	/*** Join threads ***/
-	/*for(i = 0; i < initial_number_of_cyclists; i++)	{*/
-	/*errno_cpy = pthread_join(threads[i], NULL);*/
-	/*if(errno_cpy != 0) {*/
-	/*sprintf(errmsg, "Error joining thread %d id %0lx",*/
-	/*i, (unsigned long int) threads[i]);*/
-	/*handle_error(errmsg);*/
-	/*}*/
-	/*}*/
 	
 	/*pthread_exit(NULL);*/
 	return 0;

@@ -51,7 +51,7 @@ void *cyclist(void *me) {
 		/* This cyclist was eliminated or broke, destroy thread */
 		Sem_wait(&all_runway, &(me->ts), me->thread_num);
 #ifdef DEBUG
-		/*printf("Thread %d cyclist %d started\n", me->thread_num, me->cyclist_id);*/
+		printf("Thread %d cyclist %d started\n", me->thread_num, me->cyclist_id);
 #endif
 		/* Simulate cyclist here */
 		if (variable_speed && (me->speed == 25) && !me->advanced_half_meter) {
@@ -104,27 +104,21 @@ void *cyclist(void *me) {
 				Sem_post(&all_runway, me->thread_num);
 
 #ifdef DEBUG
-		/*printf("Thread %d cyclist %d ended\n", me->thread_num, me->cyclist_id);*/
+		printf("Thread %d cyclist %d ended\n", me->thread_num, me->cyclist_id);
 #endif
 		/* End here */
 
 		/* Get ready for next iteration */
 		Sem_wait(&lock_cyclists_set, &(me->ts), me->thread_num);
 		cyclists_set++;
-		/*printf("%d/%d set\n", cyclists_set, current_number_of_cyclists);*/
 		if(cyclists_set >= current_number_of_cyclists) {
 			cyclists_set = 0;
 #ifdef DEBUG
 			printf("Everyone set!\n");
 #endif
-			/*Sem_post(&lock_cyclists_set, me->thread_num);*/
-			/* Tell main that we are ready! */
-			/*sem_getvalue(&xavaska, &i);*/
-			/*printf("V all, %d\n", i);*/
 			Sem_post(&lock_cyclists_set, me->thread_num);
-			Sem_post(&xavaska, me->thread_num);
-			/*sem_getvalue(&xavaska, &i);*/
-			/*printf("V all, %d\n", i);*/
+			/* Tell main that we are ready! */
+			Sem_post(&all_cyclists_set_up, me->thread_num);
 		}
 		else
 			Sem_post(&lock_cyclists_set, me->thread_num);
