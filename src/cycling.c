@@ -236,16 +236,11 @@ int main(int argc, char **argv) {
 			if(errno_cpy != 0) handle_error_en(errno_cpy, "join thread (eliminated)");
 			final_position[current_number_of_cyclists-1] = tinfo[last[0]].cyclist_id;
 			if (current_number_of_cyclists >= 2) {
-#ifdef DEBUG
-				printf("\nCyclist %d (thread %d) eliminated!\n", tinfo[last[0]].cyclist_id, tinfo[last[0]].thread_num);
-				printf("The second last is cyclist %d (thread %d)\n", tinfo[last[1]].cyclist_id, tinfo[last[0]].thread_num);
-#else
-				printf("Ciclista %d eliminado!\n", tinfo[last[0]].cyclist_id);
-				printf("O penúltimo ciclista é  %d\n", tinfo[last[1]].cyclist_id);
-#endif
+				printf("\nCyclist %d eliminated!\n", tinfo[last[0]].cyclist_id);
+				printf("The second last is cyclist %d\n", tinfo[last[1]].cyclist_id);
 			}
 			if (current_number_of_cyclists >= 3)
-				printf("O ante penúltimo ciclista é %d\n", tinfo[last[2]].cyclist_id);
+				printf("The third last is cyclist %d\n", tinfo[last[2]].cyclist_id);
 			current_lap++;
 			already_tried = 0;
 		}
@@ -318,16 +313,10 @@ int main(int argc, char **argv) {
 			}
 		}
 	}
-#ifdef DEBUG
 	printf("\nRace ended!\n\n");
 	printf("Final standings:\n");
 	for (i = 0; i < initial_number_of_cyclists; i++)
 		printf("%d: Cyclist %d\n", i + 1, final_position[i]);
-#else
-	printf("\nouro para ciclista %d\n", final_position[0]);
-	printf("\nprata para ciclista %d\n", final_position[1]);
-	printf("\nbronze para ciclista %d\n\n", final_position[2]);
-#endif
 	
 	/*pthread_exit(NULL);*/
 	return 0;
