@@ -224,8 +224,13 @@ int main(int argc, char **argv) {
 			runway[tinfo[last[0]].position_runway][tinfo[last[0]].position_track] = 0;
 			tinfo[last[0]].kill_self = 1;
 			if (current_number_of_cyclists >= 2) {
+#ifdef DEBUG
+				printf("\nCyclist %d (thread %d) eliminated!\n", tinfo[last[0]].cyclist_id, tinfo[last[0]].thread_num);
+				printf("The second last is cyclist %d (thread %d)\n", tinfo[last[1]].cyclist_id, tinfo[last[0]].thread_num);
+#else
 				printf("\nCyclist %d eliminated!\n", tinfo[last[0]].cyclist_id);
 				printf("The second last is cyclist %d\n", tinfo[last[1]].cyclist_id);
+#endif
 			}
 			if (current_number_of_cyclists >= 3)
 				printf("The third last is cyclist %d\n", tinfo[last[2]].cyclist_id);
