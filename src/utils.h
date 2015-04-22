@@ -34,11 +34,12 @@ void handle_error(const char *msg) __attribute__ ((__noreturn__));
 		sprintf(errmsg, "sem_post(%s, %d)", # sem, thread); \
 		handle_error_en(errno_cpy, errmsg); \
 	} \
-	else \
+	else { \
 		errno_cpy = errno; \
 		sprintf(errmsg, "sem_post(%s, %d)", # sem, thread); \
 		errno = errno_cpy; \
 		perror(errmsg); \
+	} \
 	} while(0)
 #else
 #define Sem_post(sem, thread) do { \
@@ -48,7 +49,7 @@ void handle_error(const char *msg) __attribute__ ((__noreturn__));
 		handle_error_en(errno_cpy, errmsg); \
 	} \
 	} while(0)
-#endif /* PRINT_SEM_OK_AND_NOK */
+#endif /* PRINT_SEM_POST_OK_AND_NOK */
 
 #define PRINT_SEM_WAIT_OK_AND_NOK
 #if defined PRINT_SEM_WAIT_OK_AND_NOK && defined(DEBUG)
@@ -60,11 +61,12 @@ void handle_error(const char *msg) __attribute__ ((__noreturn__));
 		sprintf(errmsg, "sem_timedwait(%s, %d)", # sem, thread); \
 		handle_error_en(errno_cpy, errmsg); \
 	} \
-	else \
+	else { \
 		errno_cpy = errno; \
 		sprintf(errmsg, "sem_timedwait(%s, %d)", # sem, thread); \
 		errno = errno_cpy; \
 		perror(errmsg); \
+	} \
 	} while(0)
 #else
 #define Sem_wait(sem, ts, thread) do { \
@@ -76,7 +78,7 @@ void handle_error(const char *msg) __attribute__ ((__noreturn__));
 		handle_error_en(errno_cpy, errmsg); \
 	} \
 	} while(0)
-#endif
+#endif /* PRINT_SEM_WATI_OK_AND_NOK */
 
 /* Macros for barriers */
 #define Pthread_barrier_init(bar, shared, num) do { \

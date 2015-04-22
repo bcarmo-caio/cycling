@@ -6,19 +6,18 @@
 #include <errno.h>
 #include <assert.h>
 #include <time.h>
+#include <signal.h>
 
 #include "utils.h"
 #include "cycling.h"
 #include "cyclist.h"
 
-struct timespec ts;
 
 sem_t create_thread; /* Must be initialized with 0 */
-sem_t all_cyclists_set_up; /* Must be initialized with 0 */
 sem_t go; /* Must be initialized with 0 */
 
 sem_t lock_cyclists_set; /* Must be initialized with 1 */
-int cyclists_set;
+int cyclists_set = 0;
 
 int initial_number_of_cyclists;
 sem_t lock_current_number_of_cyclists;
@@ -33,6 +32,7 @@ int runway_length;
 int variable_speed;
 
 pthread_barrier_t bar;
+sem_t all_cyclists_set_up; /* Must be initialized with 0 */
 
 int main(int argc, char **argv) {
 	int i, j, c;
@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
 	int completed_current_lap;
 	int someone_eliminated;
 	int last[3] = {-1, -1, -1};
-	int *final_position;
+	int *final_position = NULL;
 	int next_breaking_attempt = 4;
 	int debug_flag = 0;
 	int debug_time = 0;
@@ -50,6 +50,7 @@ int main(int argc, char **argv) {
 	char errmsg[200];
 	int errno_cpy;
 	int tmp;
+	struct timespec ts;
 
 	/*** Initialization ***/
 	if(argc < 4) {
@@ -90,7 +91,6 @@ int main(int argc, char **argv) {
 	final_position = malloc(runway_length * sizeof(int));
 	memset((void *) final_position, -1, runway_length * sizeof(int));
 
-	init_semaphores();
 
 	start = (int *) malloc(initial_number_of_cyclists * sizeof(int));
 	if(start == NULL)
@@ -123,6 +123,8 @@ int main(int argc, char **argv) {
 		tinfo[i].cyclist_id = runway[i][0];
 	}
 
+	init_semaphores();
+
 	/* Creating threads */
 	for (i = 0; i < initial_number_of_cyclists; i++) {
 		errno_cpy = pthread_create( &(tinfo[i].thread_id), /*pthread_t *thread*/
@@ -140,8 +142,9 @@ int main(int argc, char **argv) {
 	/*** Start simulation ***/
 	Sem_wait(&all_cyclists_set_up, &ts, MAIN_THREAD_ID);
 	printf("Race started!\n");
+
 	/*  MAIN LOOP  */
-	for (i = 0; 1; i++) {
+	while (1) {
 #ifdef DEBUG
 		printf("\nIteration %d:\n", i);
 		printf("Printing runway\n");
@@ -153,22 +156,24 @@ int main(int argc, char **argv) {
 		/*2*/
 		/*1*/
 		/*GOOOOO!*/
-		Pthread_barrier_init(&bar, 0, current_number_of_cyclists);
-		for(j = 0; j < current_number_of_cyclists; j++) Sem_post(&go, MAIN_THREAD_ID);
+		pthread_barrier_init(&bar, 0, current_number_of_cyclists);
+		for(j = 0; j < current_number_of_cyclists+100; j++) sem_post(&go);
+		/*for(j = 0; j < current_number_of_cyclists+100; j++) Sem_post(&go, MAIN_THREAD_ID);*/
 		/* NO CODE HERE!!!!! */
 		Sem_wait(&all_cyclists_set_up, &ts, MAIN_THREAD_ID);
+		pthread_barrier_destroy(&bar);
 
 		/*** Elimination ***/
 		someone_eliminated = 0;
 		completed_current_lap = 0;
 		for (c = 0; c < initial_number_of_cyclists; c++)
-			if (tinfo[c].completed_laps >= current_lap)
+			if ((tinfo[c].status == RUNNING) && (tinfo[c].completed_laps >= current_lap))
 				completed_current_lap++;
 		if (completed_current_lap == current_number_of_cyclists) {
 			/* Find last cyclist */
 			for (c = 0; c < initial_number_of_cyclists; c++) {
 				if (tinfo[c].status == RUNNING) {
-					last[0] = c;
+					last[0] = c; /* First running cyclist */
 					break;
 				}
 			}
@@ -176,25 +181,25 @@ int main(int argc, char **argv) {
 				if (tinfo[c].status == RUNNING) {
 					if (tinfo[c].completed_laps < tinfo[last[0]].completed_laps)
 						last[0] = c;
-					else if (tinfo[c].completed_laps == tinfo[last[0]].completed_laps
-							&& tinfo[c].position_runway > tinfo[last[0]].position_runway)
+					else if ((tinfo[c].completed_laps == tinfo[last[0]].completed_laps) &&
+							 (tinfo[c].position_runway > tinfo[last[0]].position_runway))
 						last[0] = c;
 				}
 			}
 			/* Find second last cyclist */
 			if (current_number_of_cyclists >= 2) {
 				for (c = 0; c < initial_number_of_cyclists; c++) {
-					if (c != last[0] && tinfo[c].status == RUNNING) {
+					if ((c != last[0]) && (tinfo[c].status == RUNNING)) {
 						last[1] = c;
 						break;
 					}
 				}
 				for (c = 0; c < initial_number_of_cyclists; c++) {
-					if (c != last[0] && tinfo[c].status == RUNNING) {
+					if ((c != last[0]) && (tinfo[c].status == RUNNING)) {
 						if (tinfo[c].completed_laps < tinfo[last[1]].completed_laps)
 							last[1] = c;
-						else if (tinfo[c].completed_laps == tinfo[last[1]].completed_laps
-								&& tinfo[c].position_runway > tinfo[last[1]].position_runway)
+						else if ((tinfo[c].completed_laps == tinfo[last[1]].completed_laps) &&
+								 (tinfo[c].position_runway > tinfo[last[1]].position_runway))
 							last[1] = c;
 					}
 				}
@@ -202,27 +207,31 @@ int main(int argc, char **argv) {
 			/* Find third last cyclist */
 			if (current_number_of_cyclists >= 3) {
 				for (c = 0; c < initial_number_of_cyclists; c++) {
-					if (c != last[0] && c != last[1] && tinfo[c].status == RUNNING) {
+					if ((c != last[0]) && (c != last[1] && tinfo[c].status == RUNNING)) {
 						last[2] = c;
 						break;
 					}
 				}
 				for (c = 0; c < initial_number_of_cyclists; c++) {
-					if (c != last[0] && c != last[1] && tinfo[c].status == RUNNING) {
+					if ((c != last[0]) && (c != last[1]) && (tinfo[c].status == RUNNING)) {
 						if (tinfo[c].completed_laps < tinfo[last[2]].completed_laps)
 							last[2] = c;
-						else if (tinfo[c].completed_laps == tinfo[last[2]].completed_laps
-								&& tinfo[c].position_runway > tinfo[last[2]].position_runway)
+						else if ((tinfo[c].completed_laps == tinfo[last[2]].completed_laps) &&
+								 (tinfo[c].position_runway > tinfo[last[2]].position_runway))
 							last[2] = c;
 					}
 				}
 			}
 			/* Eliminate */
+			printf("eliminando\n");
 			someone_eliminated = 1;
 			tinfo[last[0]].status = ELIMINATED;
-			final_position[current_number_of_cyclists-1] = tinfo[last[0]].cyclist_id;
 			runway[tinfo[last[0]].position_runway][tinfo[last[0]].position_track] = 0;
-			tinfo[last[0]].kill_self = 1;
+			errno_cpy = pthread_cancel(tinfo[last[0]].thread_id);
+			if(errno_cpy != 0) handle_error_en(errno_cpy, "cancel thread");
+			errno_cpy = pthread_join(tinfo[last[0]].thread_id, NULL);
+			if(errno_cpy != 0) handle_error_en(errno_cpy, "join thread");
+			final_position[current_number_of_cyclists-1] = tinfo[last[0]].cyclist_id;
 			if (current_number_of_cyclists >= 2) {
 #ifdef DEBUG
 				printf("\nCyclist %d (thread %d) eliminated!\n", tinfo[last[0]].cyclist_id, tinfo[last[0]].thread_num);
@@ -234,9 +243,11 @@ int main(int argc, char **argv) {
 			}
 			if (current_number_of_cyclists >= 3)
 				printf("The third last is cyclist %d\n", tinfo[last[2]].cyclist_id);
+			printf("volta ++\n");
 			current_lap++;
 		}
 
+#if 0
 		/*** Breaking ***/
 		if (current_number_of_cyclists - someone_eliminated > 3) {
 			for (c = 0; c < initial_number_of_cyclists; c++)
@@ -246,6 +257,7 @@ int main(int argc, char **argv) {
 				if (rand() % 100 == 42) {
 					c = rand() % initial_number_of_cyclists;
 					while (1) {
+						printf("tentando quebrar alguem\n");
 						if (tinfo[c].status == RUNNING) {
 							tinfo[c].status = BROKEN;
 							if (final_position[current_number_of_cyclists-1] == -1)
@@ -263,8 +275,10 @@ int main(int argc, char **argv) {
 				next_breaking_attempt += 4;
 			}
 		}
+#endif
 
 		/*** Check if race ended ***/
+		current_number_of_cyclists -= someone_eliminated;
 		if (current_number_of_cyclists == 0) {
 			break;
 		}

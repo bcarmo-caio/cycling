@@ -18,20 +18,16 @@ struct thread_info {
 	int cyclist_id;
 	int position_runway;
 	int next_position_runway;
-	int position_runway_bkp;
-	int next_position_runway_bkp;
 	int position_track;
 	int lap;
 	int completed_laps;
 	int status;
-	int kill_self;
 	int speed;
 	int advanced_half_meter;
 	struct timespec ts;
 };
 
 extern sem_t create_thread; /* Initialized with 0 */
-extern sem_t all_cyclists_set_up; /* Initialized with 0 */
 extern sem_t go; /* Initialized with 0 */
 
 extern sem_t lock_cyclists_set; /* Initialized with 1 */
@@ -50,5 +46,6 @@ extern int runway_length;
 extern int variable_speed;
 
 extern pthread_barrier_t bar; /* Trying to be fair to threads */
+extern sem_t all_cyclists_set_up; /* Initialized with 0 */
 
 #endif

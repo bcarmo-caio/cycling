@@ -2,8 +2,8 @@ CC=gcc
 #DO NOT ADD -ansi. -ansi DO NOT SUPPORT pthreads_barrier_* 
 CFLAGS=-Wall \
 	   -Wextra \
-	   -O2 \
 	   -pedantic \
+	   -O0 \
 	   -Wno-comment \
 	   -Winit-self \
 	   -Wmissing-braces \
