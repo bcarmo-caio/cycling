@@ -240,7 +240,7 @@ int main(int argc, char **argv) {
 				printf("\nCyclist %d (thread %d) eliminated!\n", tinfo[last[0]].cyclist_id, tinfo[last[0]].thread_num);
 				printf("The second last is cyclist %d (thread %d)\n", tinfo[last[1]].cyclist_id, tinfo[last[0]].thread_num);
 #else
-				/*printf("\nCyclist %d eliminated!\n", tinfo[last[0]].cyclist_id);*/
+				printf("Ciclista %d eliminado!\n", tinfo[last[0]].cyclist_id);
 				/*printf("The second last is cyclist %d\n", tinfo[last[1]].cyclist_id);*/
 #endif
 			}
