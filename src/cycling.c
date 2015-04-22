@@ -53,6 +53,7 @@ int main(int argc, char **argv) {
 	int errno_cpy;
 	int tmp;
 	struct timespec ts;
+	int already_tried = 0;
 
 	/*** Initialization ***/
 	if(argc < 4) {
@@ -246,15 +247,17 @@ int main(int argc, char **argv) {
 			/*if (current_number_of_cyclists >= 3)*/
 			/*printf("The third last is cyclist %d\n", tinfo[last[2]].cyclist_id);*/
 			current_lap++;
+			already_tried = 0;
 		}
 
 		/*** Breaking ***/
-		if ( ((current_lap % 4) == 0) && (current_number_of_cyclists - someone_eliminated > 3)) {
+		if ( ((current_lap % 4) == 0) && !already_tried && (current_number_of_cyclists - someone_eliminated > 3)) {
+			already_tried = 1;
 			for (c = 0; c < initial_number_of_cyclists; c++)
 				if (tinfo[c].completed_laps == next_breaking_attempt)
 					break;
 			if (c < initial_number_of_cyclists) {
-				if (rand() % 100 < 5) /* any number 0 to 99 */ {
+				if (rand() % 100 == 42) /* any number 0 to 99 */ {
 					/*printf("Someone will break down\n");*/
 					c = rand() % initial_number_of_cyclists;
 					while (1) { /* for sure this will stop */
@@ -315,7 +318,7 @@ int main(int argc, char **argv) {
 			}
 		}
 	}
-#if 0
+#ifdef DEBUG
 	printf("\nRace ended!\n\n");
 	printf("Final standings:\n");
 	for (i = 0; i < initial_number_of_cyclists; i++)
