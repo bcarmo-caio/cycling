@@ -241,11 +241,11 @@ int main(int argc, char **argv) {
 				printf("The second last is cyclist %d (thread %d)\n", tinfo[last[1]].cyclist_id, tinfo[last[0]].thread_num);
 #else
 				printf("Ciclista %d eliminado!\n", tinfo[last[0]].cyclist_id);
-				/*printf("The second last is cyclist %d\n", tinfo[last[1]].cyclist_id);*/
+				printf("O penúltimo ciclista é  %d\n", tinfo[last[1]].cyclist_id);
 #endif
 			}
-			/*if (current_number_of_cyclists >= 3)*/
-			/*printf("The third last is cyclist %d\n", tinfo[last[2]].cyclist_id);*/
+			if (current_number_of_cyclists >= 3)
+				printf("O ante penúltimo ciclista é %d\n", tinfo[last[2]].cyclist_id);
 			current_lap++;
 			already_tried = 0;
 		}
