@@ -230,9 +230,9 @@ int main(int argc, char **argv) {
 			tinfo[last[0]].status = ELIMINATED;
 			runway[tinfo[last[0]].position_runway][tinfo[last[0]].position_track] = 0;
 			errno_cpy = pthread_cancel(tinfo[last[0]].thread_id);
-			if(errno_cpy != 0) handle_error_en(errno_cpy, "cancel thread");
+			if(errno_cpy != 0) handle_error_en(errno_cpy, "cancel thread (eliminated)");
 			errno_cpy = pthread_join(tinfo[last[0]].thread_id, NULL);
-			if(errno_cpy != 0) handle_error_en(errno_cpy, "join thread");
+			if(errno_cpy != 0) handle_error_en(errno_cpy, "join thread (eliminated)");
 			final_position[current_number_of_cyclists-1] = tinfo[last[0]].cyclist_id;
 			if (current_number_of_cyclists >= 2) {
 #ifdef DEBUG
@@ -248,35 +248,39 @@ int main(int argc, char **argv) {
 			current_lap++;
 		}
 
-#if 0
 		/*** Breaking ***/
-		if (current_number_of_cyclists - someone_eliminated > 3) {
+		if ( ((current_lap % 4) == 0) && (current_number_of_cyclists - someone_eliminated > 3)) {
 			for (c = 0; c < initial_number_of_cyclists; c++)
 				if (tinfo[c].completed_laps == next_breaking_attempt)
 					break;
 			if (c < initial_number_of_cyclists) {
-				if (rand() % 100 == 42) {
+				if (rand() % 100 < 50) /* any number 0 to 99 */ {
+					printf("Someone will break down\n");
 					c = rand() % initial_number_of_cyclists;
-					while (1) {
-						printf("tentando quebrar alguem\n");
+					while (1) { /* for sure this will stop */
 						if (tinfo[c].status == RUNNING) {
 							tinfo[c].status = BROKEN;
 							if (final_position[current_number_of_cyclists-1] == -1)
 								final_position[current_number_of_cyclists-1] = tinfo[c].cyclist_id;
 							else
 								final_position[current_number_of_cyclists-2] = tinfo[c].cyclist_id;
+
 							runway[tinfo[c].position_runway][tinfo[c].position_track] = 0;
-							tinfo[c].kill_self = 1;
-							printf("Cyclist %d just broke!\n", tinfo[c].cyclist_id);
+							errno_cpy = pthread_cancel(tinfo[c].thread_id);
+							if(errno_cpy != 0) handle_error_en(errno_cpy, "cancel thread (broken)");
+							errno_cpy = pthread_join(tinfo[c].thread_id, NULL);
+							if(errno_cpy != 0) handle_error_en(errno_cpy, "join thread (broken)");
+
+							someone_eliminated++;
+
+							printf("Cyclist %d just broke. Lap %d!\n", tinfo[c].cyclist_id, current_lap);
 							break;
 						}
 						c = (c + 1) % initial_number_of_cyclists;
 					}
 				}
-				next_breaking_attempt += 4;
 			}
 		}
-#endif
 
 		/*** Check if race ended ***/
 		current_number_of_cyclists -= someone_eliminated;
