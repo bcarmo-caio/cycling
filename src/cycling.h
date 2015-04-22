@@ -47,5 +47,6 @@ extern int variable_speed;
 
 extern pthread_barrier_t bar; /* Trying to be fair to threads */
 extern sem_t all_cyclists_set_up; /* Initialized with 0 */
+extern sem_t xavaska; /* Initialized with 0 */
 
 #endif

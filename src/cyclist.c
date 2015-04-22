@@ -111,18 +111,20 @@ void *cyclist(void *me) {
 		/* Get ready for next iteration */
 		Sem_wait(&lock_cyclists_set, &(me->ts), me->thread_num);
 		cyclists_set++;
-		printf("%d/%d set\n", cyclists_set, current_number_of_cyclists);
+		/*printf("%d/%d set\n", cyclists_set, current_number_of_cyclists);*/
 		if(cyclists_set >= current_number_of_cyclists) {
 			cyclists_set = 0;
 #ifdef DEBUG
 			printf("Everyone set!\n");
 #endif
-			sem_getvalue(&all_cyclists_set_up, &i);
 			/*Sem_post(&lock_cyclists_set, me->thread_num);*/
 			/* Tell main that we are ready! */
-			printf("V all, %d\n", i);
+			/*sem_getvalue(&xavaska, &i);*/
+			/*printf("V all, %d\n", i);*/
 			Sem_post(&lock_cyclists_set, me->thread_num);
-			Sem_post(&all_cyclists_set_up, me->thread_num);
+			Sem_post(&xavaska, me->thread_num);
+			/*sem_getvalue(&xavaska, &i);*/
+			/*printf("V all, %d\n", i);*/
 		}
 		else
 			Sem_post(&lock_cyclists_set, me->thread_num);

@@ -33,6 +33,8 @@ int variable_speed;
 
 pthread_barrier_t bar;
 sem_t all_cyclists_set_up; /* Must be initialized with 0 */
+sem_t xavaska; /* Must be initialized with 0 */
+
 
 int main(int argc, char **argv) {
 	int i, j, c;
@@ -124,6 +126,7 @@ int main(int argc, char **argv) {
 	}
 
 	init_semaphores();
+	sem_init(&xavaska, 0, 0);
 
 	/* Creating threads */
 	for (i = 0; i < initial_number_of_cyclists; i++) {
@@ -156,11 +159,12 @@ int main(int argc, char **argv) {
 		/*2*/
 		/*1*/
 		/*GOOOOO!*/
+		/*printf("current_number_of_cyclists %d\n", current_number_of_cyclists);*/
 		pthread_barrier_init(&bar, 0, current_number_of_cyclists);
-		for(j = 0; j < current_number_of_cyclists+100; j++) sem_post(&go);
+		for(i = 0; i < current_number_of_cyclists; i++) sem_post(&go);
 		/*for(j = 0; j < current_number_of_cyclists+100; j++) Sem_post(&go, MAIN_THREAD_ID);*/
 		/* NO CODE HERE!!!!! */
-		Sem_wait(&all_cyclists_set_up, &ts, MAIN_THREAD_ID);
+		Sem_wait(&xavaska, &ts, MAIN_THREAD_ID);
 		pthread_barrier_destroy(&bar);
 
 		/*** Elimination ***/
@@ -223,7 +227,7 @@ int main(int argc, char **argv) {
 				}
 			}
 			/* Eliminate */
-			printf("eliminando\n");
+			/*printf("eliminando\n");*/
 			someone_eliminated = 1;
 			tinfo[last[0]].status = ELIMINATED;
 			runway[tinfo[last[0]].position_runway][tinfo[last[0]].position_track] = 0;
@@ -237,13 +241,13 @@ int main(int argc, char **argv) {
 				printf("\nCyclist %d (thread %d) eliminated!\n", tinfo[last[0]].cyclist_id, tinfo[last[0]].thread_num);
 				printf("The second last is cyclist %d (thread %d)\n", tinfo[last[1]].cyclist_id, tinfo[last[0]].thread_num);
 #else
-				printf("\nCyclist %d eliminated!\n", tinfo[last[0]].cyclist_id);
-				printf("The second last is cyclist %d\n", tinfo[last[1]].cyclist_id);
+				/*printf("\nCyclist %d eliminated!\n", tinfo[last[0]].cyclist_id);*/
+				/*printf("The second last is cyclist %d\n", tinfo[last[1]].cyclist_id);*/
 #endif
 			}
 			if (current_number_of_cyclists >= 3)
-				printf("The third last is cyclist %d\n", tinfo[last[2]].cyclist_id);
-			printf("volta ++\n");
+				/*printf("The third last is cyclist %d\n", tinfo[last[2]].cyclist_id);*/
+			/*printf("volta ++\n");*/
 			current_lap++;
 		}
 
