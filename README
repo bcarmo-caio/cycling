@@ -7,5 +7,5 @@ To compile:
 make
 
 To execute:
-./cyclism d n [v|u] [-d]
+./cycling d n v|u [-d]
 Option "-d" turns the debug flag on.

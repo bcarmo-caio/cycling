@@ -1,9 +1,9 @@
 CC=gcc
-#DO NOT ADD -ansi. -ansi DO NOT SUPPORT pthreads_barrier_* 
+#DO NOT ADD -ansi. -ansi DO NOT SUPPORT pthreads_barrier_*
 CFLAGS=-Wall \
 	   -Wextra \
 	   -pedantic \
-	   -O0 \
+	   -O2 \
 	   -Wno-comment \
 	   -Winit-self \
 	   -Wmissing-braces \
@@ -43,9 +43,9 @@ report: report.tex
 	pdflatex report.tex
 	rm -rf report.aux report.log
 
-package: cycling.c Makefile README report.pdf
+package: src Makefile README report.pdf
 	mkdir ep1-caio-leonardo
-	cp $^ ep1-caio-leonardo
+	cp -a $^ ep1-caio-leonardo
 	tar cf ep1.tar ep1-caio-leonardo
 	gzip --best ep1.tar
 	rm -rf ep1-caio-leonardo

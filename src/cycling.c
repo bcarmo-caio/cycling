@@ -147,6 +147,7 @@ int main(int argc, char **argv) {
 	/*printf("Race started!\n");*/
 
 	/*  MAIN LOOP  */
+	printf("Race started!\n");
 	while (1) {
 #ifdef DEBUG
 		printf("\nIteration %d:\n", i);
@@ -315,7 +316,10 @@ int main(int argc, char **argv) {
 	}
 	printf("\nRace ended!\n\n");
 	printf("Final standings:\n");
-	for (i = 0; i < initial_number_of_cyclists; i++)
+	printf("%d: Cyclist %d   Gold medal!\n", 1, final_position[0]);
+	printf("%d: Cyclist %d   Silver medal!\n", 2, final_position[1]);
+	printf("%d: Cyclist %d   Bronze medal!\n", 3, final_position[2]);
+	for (i = 3; i < initial_number_of_cyclists; i++)
 		printf("%d: Cyclist %d\n", i + 1, final_position[i]);
 	
 	/*pthread_exit(NULL);*/
