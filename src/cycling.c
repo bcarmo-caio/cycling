@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
 
 	/*** Start simulation ***/
 	Sem_wait(&all_cyclists_set_up, &ts, MAIN_THREAD_ID);
-	printf("Race started!\n");
+	/*printf("Race started!\n");*/
 
 	/*  MAIN LOOP  */
 	while (1) {
@@ -239,12 +239,12 @@ int main(int argc, char **argv) {
 				printf("\nCyclist %d (thread %d) eliminated!\n", tinfo[last[0]].cyclist_id, tinfo[last[0]].thread_num);
 				printf("The second last is cyclist %d (thread %d)\n", tinfo[last[1]].cyclist_id, tinfo[last[0]].thread_num);
 #else
-				printf("\nCyclist %d eliminated!\n", tinfo[last[0]].cyclist_id);
-				printf("The second last is cyclist %d\n", tinfo[last[1]].cyclist_id);
+				/*printf("\nCyclist %d eliminated!\n", tinfo[last[0]].cyclist_id);*/
+				/*printf("The second last is cyclist %d\n", tinfo[last[1]].cyclist_id);*/
 #endif
 			}
-			if (current_number_of_cyclists >= 3)
-				printf("The third last is cyclist %d\n", tinfo[last[2]].cyclist_id);
+			/*if (current_number_of_cyclists >= 3)*/
+			/*printf("The third last is cyclist %d\n", tinfo[last[2]].cyclist_id);*/
 			current_lap++;
 		}
 
@@ -254,8 +254,8 @@ int main(int argc, char **argv) {
 				if (tinfo[c].completed_laps == next_breaking_attempt)
 					break;
 			if (c < initial_number_of_cyclists) {
-				if (rand() % 100 < 50) /* any number 0 to 99 */ {
-					printf("Someone will break down\n");
+				if (rand() % 100 < 5) /* any number 0 to 99 */ {
+					/*printf("Someone will break down\n");*/
 					c = rand() % initial_number_of_cyclists;
 					while (1) { /* for sure this will stop */
 						if (tinfo[c].status == RUNNING) {
@@ -291,7 +291,7 @@ int main(int argc, char **argv) {
 		/*** Debug ***/
 		if (debug_flag) {
 			debug_time++;
-			if (debug_time == 1/*XXX change 1 to 200*/) {
+			if (debug_time == 200 /*(14.400 / 72 = 200)*/) {
 				debug_time = 0;
 				printf("\nDebug:\n");
 				printf("Cyclist | Lap | Position\n");
@@ -315,11 +315,15 @@ int main(int argc, char **argv) {
 			}
 		}
 	}
-
+#if 0
 	printf("\nRace ended!\n\n");
 	printf("Final standings:\n");
 	for (i = 0; i < initial_number_of_cyclists; i++)
 		printf("%d: Cyclist %d\n", i + 1, final_position[i]);
+#endif
+	printf("ouro para ciclista %d\n", final_position[0]);
+	printf("prata para ciclista %d\n", final_position[1]);
+	printf("bronze para ciclista %d\n", final_position[2]);
 	
 	/*pthread_exit(NULL);*/
 	return 0;
